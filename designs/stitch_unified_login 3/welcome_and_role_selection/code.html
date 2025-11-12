@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NCM Welcome</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1173d4",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+        .dark .form-select {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="flex flex-col h-screen">
+<div class="flex-grow">
+<div class="relative h-64">
+<img alt="Community workers collaborating" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzri1md4YnBcoai5uBIYgsBulj2ZRmNck9PhYndMhwIXnH2P9nWagTAGIbis1pSfBSp4OrlfrH-FyHjxkQD2kwGsElonTGr2gX33M_0HcpQZK6Ro2J1irn_QQrPz-Gk4ijgH94e-iy-vJ1GHePHgyy3RkwfiEWSE5tXn7rp2V68TmN8GS1iPkR3u9yg5WMcTg3iY3Tyi0mirW3ofCNOaOtcH57p587dwBrjGbBx2tddUneygQI2iZlY3vE82KyqI5fVeF1TdbrQQ"/>
+<div class="absolute inset-0 bg-black/30"></div>
+</div>
+<div class="px-6 py-8 text-center">
+<h1 class="text-2xl font-bold text-slate-800 dark:text-white">Welcome to NCM</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Choose your role to get started</p>
+</div>
+<div class="px-6 space-y-4">
+<fieldset class="bg-slate-200 dark:bg-slate-800/50 p-1 rounded-lg grid grid-cols-2 gap-1">
+<legend class="sr-only">Select your role</legend>
+<div>
+<input checked="" class="sr-only" id="field-worker" name="role" type="radio"/>
+<label class="text-center text-sm font-medium py-2 px-4 block rounded-md cursor-pointer text-slate-600 dark:text-slate-300 peer-checked:bg-white dark:peer-checked:bg-slate-800 peer-checked:text-slate-800 dark:peer-checked:text-white peer-checked:shadow" for="field-worker">
+                            Field Worker
+                        </label>
+</div>
+<div>
+<input class="sr-only" id="member" name="role" type="radio"/>
+<label class="text-center text-sm font-medium py-2 px-4 block rounded-md cursor-pointer text-slate-600 dark:text-slate-300 peer-checked:bg-white dark:peer-checked:bg-slate-800 peer-checked:text-slate-800 dark:peer-checked:text-white peer-checked:shadow" for="member">
+                            Member
+                        </label>
+</div>
+</fieldset>
+<div class="relative">
+<select class="form-select w-full appearance-none bg-slate-100 dark:bg-slate-800/50 border-none rounded-lg h-14 px-4 text-slate-800 dark:text-slate-300 focus:ring-2 focus:ring-primary">
+<option>Select Municipality</option>
+<option>Municipality A</option>
+<option>Municipality B</option>
+</select>
+</div>
+<div class="relative">
+<select class="form-select w-full appearance-none bg-slate-100 dark:bg-slate-800/50 border-none rounded-lg h-14 px-4 text-slate-800 dark:text-slate-300 focus:ring-2 focus:ring-primary">
+<option>Select Language</option>
+<option>English</option>
+<option>Spanish</option>
+</select>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 space-y-4">
+<div class="flex items-start space-x-3">
+<input class="h-5 w-5 mt-0.5 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary bg-slate-100 dark:bg-slate-800" id="terms" type="checkbox"/>
+<label class="text-sm text-slate-600 dark:text-slate-400" for="terms">
+                    I agree to the <a class="font-medium text-primary hover:underline" href="#">Terms of Service</a> and <a class="font-medium text-primary hover:underline" href="#">Privacy Policy</a>
+</label>
+</div>
+<button class="w-full h-12 px-5 rounded-lg bg-primary text-white text-base font-bold tracking-wide shadow-lg shadow-primary/30 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+                Continue
+            </button>
+<div class="h-2"></div>
+</div>
+</div>
+
+</body></html>

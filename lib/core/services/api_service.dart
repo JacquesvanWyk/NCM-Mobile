@@ -5,9 +5,11 @@ import '../../data/models/user_model.dart';
 import '../../data/models/visit_model.dart';
 import '../../data/models/complaint_model.dart';
 import '../../data/models/poll_model.dart';
+import '../../data/models/supporter_model.dart';
 import '../../data/models/vote_submission_request.dart';
 import '../../data/models/vote_submission_response.dart';
 import '../../data/models/poll_statistics_response.dart';
+import '../../data/models/registration_models.dart';
 
 part 'api_service.g.dart';
 
@@ -24,6 +26,19 @@ abstract class ApiService {
 
   @GET('/api/v1/auth/user')
   Future<UserModel> getCurrentUser();
+
+  // Member Registration endpoints (ID-based with OTP verification)
+  @POST('/api/check-id-number')
+  Future<CheckIdNumberResponse> checkIdNumber(@Body() CheckIdNumberRequest request);
+
+  @POST('/api/register-member')
+  Future<RegisterMemberResponse> registerMember(@Body() RegisterMemberRequest request);
+
+  @POST('/api/verify-registration')
+  Future<VerifyRegistrationResponse> verifyRegistration(@Body() VerifyRegistrationRequest request);
+
+  @POST('/api/resend-verification-code')
+  Future<ResendCodeResponse> resendVerificationCode(@Body() ResendCodeRequest request);
 
   // Members endpoints
   @GET('/members')
@@ -46,6 +61,25 @@ abstract class ApiService {
 
   @GET('/members/search')
   Future<MemberModel> searchMember(@Query('id_number') String idNumber);
+
+  @GET('/api/members/search')
+  Future<List<MemberModel>> searchMembers(@Query('query') String query);
+
+  @GET('/api/members/membership/{membershipNumber}')
+  Future<FindMemberByMembershipNumberResponse> findMemberByMembershipNumber(
+    @Path('membershipNumber') String membershipNumber,
+  );
+
+  @POST('/api/members/{id}/activate')
+  Future<MemberModel> activateMemberAccount(
+    @Path('id') int id,
+    @Body() ActivateMemberAccountRequest request,
+  );
+
+  @POST('/api/visits/create-from-membership')
+  Future<VisitModel> createVisitFromMembership(
+    @Body() CreateVisitFromMembershipRequest request,
+  );
 
   // Leaders endpoints
   @GET('/leaders')
@@ -203,13 +237,72 @@ abstract class ApiService {
   @POST('/api/announcements/{announcementId}/mark-read')
   Future<void> markAnnouncementAsRead(@Path('announcementId') int announcementId);
 
+  // Supporters endpoints
+  @GET('/api/supporters')
+  Future<PaginatedResponse<SupporterModel>> getSupporters(
+    @Query('page') int page,
+    @Query('ward') String? ward,
+    @Query('registeredVoter') String? registeredVoter,
+    @Query('search') String? search,
+  );
+
+  @POST('/api/supporters')
+  Future<CreateSupporterResponse> createSupporter(@Body() CreateSupporterRequest request);
+
+  @GET('/api/supporters/{id}')
+  Future<GetSupporterResponse> getSupporter(@Path('id') int id);
+
+  @GET('/api/supporters/stats')
+  Future<SupporterStatsResponse> getSupporterStats();
+
+  // SMS endpoints
+  @GET('/api/sms')
+  Future<PaginatedResponse<SmsLogModel>> getSmsLogs(
+    @Query('page') int page, {
+    @Query('status') String? status,
+    @Query('date_from') String? dateFrom,
+    @Query('date_to') String? dateTo,
+    @Query('search') String? search,
+    @Query('per_page') int? perPage,
+  });
+
+  @POST('/api/sms')
+  Future<SendSmsResponse> sendSms(@Body() SendSmsRequest request);
+
+  @GET('/api/sms/stats')
+  Future<SmsStatsResponse> getSmsStats({
+    @Query('date_from') String? dateFrom,
+    @Query('date_to') String? dateTo,
+  });
+
+  @GET('/api/sms/{id}')
+  Future<SmsLogModel> getSmsLog(@Path('id') int id);
+
+  @POST('/api/sms/{id}/check-status')
+  Future<CheckSmsStatusResponse> checkSmsStatus(@Path('id') int id);
+
+  // PayFast configuration
+  @GET('/api/payfast/config')
+  Future<PayFastConfigResponse> getPayFastConfig();
+
+  // Push Notification endpoints
+  @POST('/api/v1/push-notifications/send')
+  Future<PushNotificationResponse> sendPushNotification(@Body() PushNotificationRequest request);
+
+  @GET('/api/v1/push-notifications/history')
+  Future<PushNotificationHistoryResponse> getPushNotificationHistory(@Query('page') int page);
+
+  @GET('/api/v1/push-notifications/stats')
+  Future<PushNotificationStatsResponse> getPushNotificationStats();
+
   // Events endpoints (ApiPlatform generated)
   @GET('/api/events')
   Future<PaginatedResponse<EventModel>> getEvents(
-    @Query('page') int page,
-    @Query('filter') String filter,
-    @Query('type') String? type,
-  );
+    @Query('municipality_id') int municipalityId, {
+    @Query('upcoming_only') bool? upcomingOnly,
+    @Query('date_from') String? dateFrom,
+    @Query('date_to') String? dateTo,
+  });
 
   @POST('/api/events/{eventId}/register')
   Future<EventRegistrationResponse> registerForEvent(@Path('eventId') int eventId);
@@ -255,6 +348,9 @@ class AuthResponse {
         municipality: MunicipalityModel.fromJson(json['municipality']),
         token: json['token'],
       );
+
+  // Getter for backward compatibility
+  String? get userType => user.userType;
 }
 
 class MobileLoginRequest {
@@ -552,11 +648,12 @@ class UpdateComplaintRequest {
 
 class CreateMemberRequest {
   final String idNumber;
-  final String firstName;
-  final String lastName;
+  final String name;
+  final String surname;
   final DateTime dateOfBirth;
   final String gender;
   final String phoneNumber;
+  final String? email;
   final String? alternativePhone;
   final String address;
   final String suburb;
@@ -568,11 +665,12 @@ class CreateMemberRequest {
 
   CreateMemberRequest({
     required this.idNumber,
-    required this.firstName,
-    required this.lastName,
+    required this.name,
+    required this.surname,
     required this.dateOfBirth,
     required this.gender,
     required this.phoneNumber,
+    this.email,
     this.alternativePhone,
     required this.address,
     required this.suburb,
@@ -585,11 +683,12 @@ class CreateMemberRequest {
 
   Map<String, dynamic> toJson() => {
         'id_number': idNumber,
-        'first_name': firstName,
-        'last_name': lastName,
+        'name': name,
+        'surname': surname,
         'date_of_birth': dateOfBirth.toIso8601String().split('T')[0],
         'gender': gender,
         'phone_number': phoneNumber,
+        'email': email,
         'alternative_phone': alternativePhone,
         'address': address,
         'suburb': suburb,
@@ -919,6 +1018,10 @@ class EventModel {
         isRegistered: json['is_registered'] ?? false,
         imageUrl: json['image_url'],
       );
+
+  // Computed getters
+  bool get isEventFull => currentAttendees >= maxAttendees;
+  int get availableSpots => maxAttendees - currentAttendees;
 }
 
 class EventRegistrationResponse {
@@ -1085,4 +1188,442 @@ class MembershipStatusResponse {
             ? DateTime.parse(json['next_payment_date'])
             : null,
       );
+}
+
+// FindMemberByMembershipNumberResponse
+class FindMemberByMembershipNumberResponse {
+  final MemberModel? member;
+
+  FindMemberByMembershipNumberResponse({this.member});
+
+  factory FindMemberByMembershipNumberResponse.fromJson(Map<String, dynamic> json) =>
+      FindMemberByMembershipNumberResponse(
+        member: json['member'] != null ? MemberModel.fromJson(json['member']) : null,
+      );
+}
+
+// ActivateMemberAccountRequest
+class ActivateMemberAccountRequest {
+  final String password;
+
+  ActivateMemberAccountRequest({required this.password});
+
+  Map<String, dynamic> toJson() => {
+        'password': password,
+      };
+}
+
+// CreateVisitFromMembershipRequest
+class CreateVisitFromMembershipRequest {
+  final String membershipNumber;
+  final int leaderId;
+
+  CreateVisitFromMembershipRequest({
+    required this.membershipNumber,
+    required this.leaderId,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'membership_number': membershipNumber,
+        'leader_id': leaderId,
+      };
+}
+
+// CreateSupporterRequest
+class CreateSupporterRequest {
+  final String name;
+  final String surname;
+  final String? email;
+  final String telephone;
+  final String? address;
+  final String ward;
+  final bool registeredVoter;
+  final String? voter;
+  final String? specialVote;
+  final String? picture;
+
+  CreateSupporterRequest({
+    required this.name,
+    required this.surname,
+    this.email,
+    required this.telephone,
+    this.address,
+    required this.ward,
+    required this.registeredVoter,
+    this.voter,
+    this.specialVote,
+    this.picture,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'surname': surname,
+        'email': email,
+        'telephone': telephone,
+        'address': address,
+        'ward': ward,
+        'registered_voter': registeredVoter,
+        'voter': voter,
+        'special_vote': specialVote,
+        'picture': picture,
+      };
+}
+
+// CreateSupporterResponse
+class CreateSupporterResponse {
+  final SupporterModel supporter;
+
+  CreateSupporterResponse({required this.supporter});
+
+  factory CreateSupporterResponse.fromJson(Map<String, dynamic> json) =>
+      CreateSupporterResponse(
+        supporter: SupporterModel.fromJson(json['supporter']),
+      );
+}
+
+// GetSupporterResponse
+class GetSupporterResponse {
+  final SupporterModel supporter;
+
+  GetSupporterResponse({required this.supporter});
+
+  factory GetSupporterResponse.fromJson(Map<String, dynamic> json) =>
+      GetSupporterResponse(
+        supporter: SupporterModel.fromJson(json['supporter']),
+      );
+}
+
+// SupporterStatsResponse
+class SupporterStatsResponse {
+  final int total;
+  final int registeredVoters;
+  final int willVote;
+  final int needsSpecialVote;
+  final int approved;
+
+  SupporterStatsResponse({
+    required this.total,
+    required this.registeredVoters,
+    required this.willVote,
+    required this.needsSpecialVote,
+    required this.approved,
+  });
+
+  factory SupporterStatsResponse.fromJson(Map<String, dynamic> json) =>
+      SupporterStatsResponse(
+        total: json['total'] ?? 0,
+        registeredVoters: json['registered_voters'] ?? 0,
+        willVote: json['will_vote'] ?? 0,
+        needsSpecialVote: json['needs_special_vote'] ?? 0,
+        approved: json['approved'] ?? 0,
+      );
+
+  // Getter for backward compatibility
+  int get specialVote => needsSpecialVote;
+}
+
+// SMS Models
+class SmsLogModel {
+  final int id;
+  final String messageId;
+  final String recipient;
+  final String? recipientName;
+  final String messageContent;
+  final String status;
+  final DateTime? sentAt;
+  final DateTime? deliveredAt;
+  final String? errorMessage;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  SmsLogModel({
+    required this.id,
+    required this.messageId,
+    required this.recipient,
+    this.recipientName,
+    required this.messageContent,
+    required this.status,
+    this.sentAt,
+    this.deliveredAt,
+    this.errorMessage,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory SmsLogModel.fromJson(Map<String, dynamic> json) => SmsLogModel(
+        id: json['id'],
+        messageId: json['message_id'],
+        recipient: json['recipient'],
+        recipientName: json['recipient_name'],
+        messageContent: json['message_content'] ?? '',
+        status: json['status'] ?? 'pending',
+        sentAt: json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null,
+        deliveredAt: json['delivered_at'] != null ? DateTime.parse(json['delivered_at']) : null,
+        errorMessage: json['error_message'],
+        createdAt: DateTime.parse(json['created_at']),
+        updatedAt: DateTime.parse(json['updated_at']),
+      );
+
+  // Helper getters for status checking
+  bool get isPending => status == 'pending';
+  bool get isSent => status == 'sent';
+  bool get isDelivered => status == 'delivered';
+  bool get isFailed => status == 'failed' || status == 'rejected' || status == 'expired';
+}
+
+class SendSmsRequest {
+  final String recipient;
+  final String message;
+  final String? recipientName;
+
+  SendSmsRequest({
+    required this.recipient,
+    required this.message,
+    this.recipientName,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'recipient': recipient,
+        'message': message,
+        if (recipientName != null) 'recipient_name': recipientName,
+      };
+}
+
+class SendSmsResponse {
+  final bool success;
+  final String message;
+  final SmsLogModel? smsLog;
+  final bool? error;
+
+  SendSmsResponse({
+    required this.success,
+    required this.message,
+    this.smsLog,
+    this.error,
+  });
+
+  factory SendSmsResponse.fromJson(Map<String, dynamic> json) => SendSmsResponse(
+        success: json['success'] ?? false,
+        message: json['message'] ?? '',
+        smsLog: json['sms_log'] != null ? SmsLogModel.fromJson(json['sms_log']) : null,
+        error: json['error'],
+      );
+}
+
+class SmsStatsResponse {
+  final int total;
+  final int pending;
+  final int sent;
+  final int delivered;
+  final int failed;
+
+  SmsStatsResponse({
+    required this.total,
+    required this.pending,
+    required this.sent,
+    required this.delivered,
+    required this.failed,
+  });
+
+  factory SmsStatsResponse.fromJson(Map<String, dynamic> json) => SmsStatsResponse(
+        total: json['total'] ?? 0,
+        pending: json['pending'] ?? 0,
+        sent: json['sent'] ?? 0,
+        delivered: json['delivered'] ?? 0,
+        failed: json['failed'] ?? 0,
+      );
+}
+
+class CheckSmsStatusResponse {
+  final bool success;
+  final String message;
+  final SmsLogModel smsLog;
+
+  CheckSmsStatusResponse({
+    required this.success,
+    required this.message,
+    required this.smsLog,
+  });
+
+  factory CheckSmsStatusResponse.fromJson(Map<String, dynamic> json) => CheckSmsStatusResponse(
+        success: json['success'] ?? false,
+        message: json['message'] ?? '',
+        smsLog: SmsLogModel.fromJson(json['sms_log']),
+      );
+}
+
+// PayFast Configuration Response
+class PayFastConfigResponse {
+  final String merchantId;
+  final String merchantKey;
+  final String returnUrl;
+  final String cancelUrl;
+  final String notifyUrl;
+  final String passphrase;
+  final bool testing;
+  final String processUrl;
+
+  PayFastConfigResponse({
+    required this.merchantId,
+    required this.merchantKey,
+    required this.returnUrl,
+    required this.cancelUrl,
+    required this.notifyUrl,
+    required this.passphrase,
+    required this.testing,
+    required this.processUrl,
+  });
+
+  factory PayFastConfigResponse.fromJson(Map<String, dynamic> json) => PayFastConfigResponse(
+        merchantId: json['merchant_id'] ?? '',
+        merchantKey: json['merchant_key'] ?? '',
+        returnUrl: json['return_url'] ?? '',
+        cancelUrl: json['cancel_url'] ?? '',
+        notifyUrl: json['notify_url'] ?? '',
+        passphrase: json['passphrase'] ?? '',
+        testing: json['testing'] ?? true,
+        processUrl: json['process_url'] ?? 'https://sandbox.payfast.co.za/eng/process',
+      );
+}
+
+// Push Notification Models
+class PushNotificationRequest {
+  final String title;
+  final String body;
+  final String recipientType;
+  final Map<String, dynamic>? data;
+  final String? clickAction;
+
+  PushNotificationRequest({
+    required this.title,
+    required this.body,
+    required this.recipientType,
+    this.data,
+    this.clickAction,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'body': body,
+    'recipient_type': recipientType,
+    if (data != null) 'data': data,
+    if (clickAction != null) 'click_action': clickAction,
+  };
+}
+
+class PushNotificationResponse {
+  final String message;
+  final PushNotificationData notification;
+
+  PushNotificationResponse({
+    required this.message,
+    required this.notification,
+  });
+
+  factory PushNotificationResponse.fromJson(Map<String, dynamic> json) => PushNotificationResponse(
+    message: json['message'] ?? '',
+    notification: PushNotificationData.fromJson(json['notification']),
+  );
+}
+
+class PushNotificationData {
+  final int id;
+  final String status;
+  final int sentCount;
+  final int failedCount;
+
+  PushNotificationData({
+    required this.id,
+    required this.status,
+    required this.sentCount,
+    required this.failedCount,
+  });
+
+  factory PushNotificationData.fromJson(Map<String, dynamic> json) => PushNotificationData(
+    id: json['id'],
+    status: json['status'],
+    sentCount: json['sent_count'] ?? 0,
+    failedCount: json['failed_count'] ?? 0,
+  );
+}
+
+class PushNotificationHistoryResponse {
+  final List<PushNotificationHistoryItem> data;
+  final int total;
+  final int currentPage;
+  final int lastPage;
+
+  PushNotificationHistoryResponse({
+    required this.data,
+    required this.total,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  factory PushNotificationHistoryResponse.fromJson(Map<String, dynamic> json) => PushNotificationHistoryResponse(
+    data: (json['data'] as List).map((item) => PushNotificationHistoryItem.fromJson(item)).toList(),
+    total: json['total'] ?? 0,
+    currentPage: json['current_page'] ?? 1,
+    lastPage: json['last_page'] ?? 1,
+  );
+}
+
+class PushNotificationHistoryItem {
+  final int id;
+  final String title;
+  final String body;
+  final String status;
+  final int sentCount;
+  final int failedCount;
+  final DateTime? sentAt;
+  final DateTime createdAt;
+
+  PushNotificationHistoryItem({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.status,
+    required this.sentCount,
+    required this.failedCount,
+    this.sentAt,
+    required this.createdAt,
+  });
+
+  factory PushNotificationHistoryItem.fromJson(Map<String, dynamic> json) => PushNotificationHistoryItem(
+    id: json['id'],
+    title: json['title'] ?? '',
+    body: json['body'] ?? '',
+    status: json['status'] ?? 'pending',
+    sentCount: json['sent_count'] ?? 0,
+    failedCount: json['failed_count'] ?? 0,
+    sentAt: json['sent_at'] != null ? DateTime.parse(json['sent_at']) : null,
+    createdAt: DateTime.parse(json['created_at']),
+  );
+}
+
+class PushNotificationStatsResponse {
+  final int total;
+  final int sent;
+  final int pending;
+  final int failed;
+  final int totalRecipients;
+  final int successfulDeliveries;
+
+  PushNotificationStatsResponse({
+    required this.total,
+    required this.sent,
+    required this.pending,
+    required this.failed,
+    required this.totalRecipients,
+    required this.successfulDeliveries,
+  });
+
+  factory PushNotificationStatsResponse.fromJson(Map<String, dynamic> json) => PushNotificationStatsResponse(
+    total: json['total'] ?? 0,
+    sent: json['sent'] ?? 0,
+    pending: json['pending'] ?? 0,
+    failed: json['failed'] ?? 0,
+    totalRecipients: json['total_recipients'] ?? 0,
+    successfulDeliveries: json['successful_deliveries'] ?? 0,
+  );
 }

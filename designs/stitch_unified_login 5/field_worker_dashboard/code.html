@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Public+Sans:wght@400;500;700;900" onload="this.rel='stylesheet'" rel="preload"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1173d4",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Public Sans"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col justify-between overflow-x-hidden">
+<div class="flex-grow">
+<header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="flex items-center p-4 justify-between">
+<h1 class="text-xl font-bold">Dashboard</h1>
+<button class="p-2 rounded-full hover:bg-primary/10">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="p-4">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-24 h-24 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCIq6O4zJw8TZBuCg03kVyXhSOtTZjj_y-PyntL81qpg1pstnNEjOwXp3DU7-HZdCFSKrg67VHu2h8EPP1DansS76WvR0gFCyAaniMDE2KWMuR2POHCz5piI-gPP0aHlOPiO851gCIyiZr-P3Mqn2ZalND-3Df4AL4gKH886KDepRCJydv1Y9ihujqrII0JyfCQxP2TKgm0o79WNC1bWWucu5y2y6bMhBCski_Nt2JQ8Q_mhFKRlp60Dy-iCcLV4ohJ0nUou8o4tg");'></div>
+<div>
+<p class="text-2xl font-bold">Ethan Carter</p>
+<p class="text-gray-500 dark:text-gray-400">Field Worker</p>
+<p class="text-gray-500 dark:text-gray-400">Municipality: Springfield</p>
+</div>
+</div>
+<section class="mb-6">
+<h2 class="text-lg font-bold mb-3">Today's Overview</h2>
+<div class="grid grid-cols-3 gap-4 text-center">
+<div class="bg-primary/10 dark:bg-primary/20 p-4 rounded-lg">
+<p class="text-sm text-gray-600 dark:text-gray-300">Planned</p>
+<p class="text-2xl font-bold">12</p>
+</div>
+<div class="bg-primary/10 dark:bg-primary/20 p-4 rounded-lg">
+<p class="text-sm text-gray-600 dark:text-gray-300">Completed</p>
+<p class="text-2xl font-bold">8</p>
+</div>
+<div class="bg-primary/10 dark:bg-primary/20 p-4 rounded-lg">
+<p class="text-sm text-gray-600 dark:text-gray-300">Complaints</p>
+<p class="text-2xl font-bold">2</p>
+</div>
+</div>
+</section>
+<section class="mb-6">
+<h2 class="text-lg font-bold mb-3">Quick Actions</h2>
+<div class="grid grid-cols-2 gap-4">
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">add_circle</span>
+<span class="text-sm font-medium">New Registration</span>
+</a>
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">qr_code_scanner</span>
+<span class="text-sm font-medium">Scan QR Code</span>
+</a>
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">campaign</span>
+<span class="text-sm font-medium">Log Complaint</span>
+</a>
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">note_add</span>
+<span class="text-sm font-medium">Record Notes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">contact_phone</span>
+<span class="text-sm font-medium">Emergency</span>
+</a>
+<a class="flex flex-col items-center justify-center text-center p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-primary text-3xl mb-2">sync</span>
+<span class="text-sm font-medium">Sync Data</span>
+</a>
+</div>
+</section>
+<section class="mb-6">
+<h2 class="text-lg font-bold mb-3">Map</h2>
+<div class="w-full h-48 bg-cover bg-center rounded-lg" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDh4eG7tiLQyN4s4OzdcgX14BAyFyfKaTKTpENG1DmFSpSaf0tVIP1PL3xf6Vq7XpXZ1p6tIKteVjz2KnRxPgx2FIZesA6Z8fF59fItGmLSWwg3c8j8OjN_73uM7RxE5UuOFpGdGl8awCdIi-D75pUso-J45iHCTv6P6LHiy6gINmKwBl6fyt_Z037o5KS2fP-Mlgb4ErEcQh_q1jVPmIy5RVGvq7jZZFcNjbs62lJ29tbApSumdyK1SKZNiyrLhuVhrAAi-7-tUw");'></div>
+</section>
+<section>
+<h2 class="text-lg font-bold mb-3">Performance Metrics</h2>
+<div class="bg-background-light dark:bg-background-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+<div class="flex justify-between items-baseline mb-2">
+<div>
+<p class="text-gray-500 dark:text-gray-400">Registrations</p>
+<p class="text-3xl font-bold">150</p>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+</div>
+<div class="h-40 flex items-end justify-between px-2 pt-4">
+<div class="flex flex-col items-center w-1/4">
+<div class="w-full bg-primary/20 dark:bg-primary/40 rounded-t" style="height: 40%;"></div>
+<p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Wk 1</p>
+</div>
+<div class="flex flex-col items-center w-1/4">
+<div class="w-full bg-primary/20 dark:bg-primary/40 rounded-t" style="height: 60%;"></div>
+<p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Wk 2</p>
+</div>
+<div class="flex flex-col items-center w-1/4">
+<div class="w-full bg-primary/20 dark:bg-primary/40 rounded-t" style="height: 20%;"></div>
+<p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Wk 3</p>
+</div>
+<div class="flex flex-col items-center w-1/4">
+<div class="w-full bg-primary/20 dark:bg-primary/40 rounded-t" style="height: 80%;"></div>
+<p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Wk 4</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<footer class="sticky bottom-0 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-700">
+<nav class="flex justify-around py-1">
+<a class="flex flex-col items-center justify-center p-2 rounded-lg text-primary w-1/5" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-xs font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-primary w-1/5" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span class="text-xs font-medium">Visits</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-primary w-1/5" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="text-xs font-medium">Members</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-primary w-1/5" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-xs font-medium">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-primary w-1/5" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-xs font-medium">Profile</span>
+</a>
+</nav>
+<div class="pb-safe-area-bottom"></div>
+</footer>
+</div>
+
+</body></html>

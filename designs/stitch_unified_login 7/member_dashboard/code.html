@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1173d4",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Public Sans"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col justify-between overflow-x-hidden">
+<div class="flex-grow">
+<header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<img alt="Profile photo" class="size-10 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKNWX05XZ-9vK2bpVvK8NasRQ8nFPcMN1pjV1aWOMW1q7a5E1tqZWYLgdjjaukRN7heqNkAqj4abe_WSR08FYgwDZTvcSDlahNsKE1M77lTbFiDc0A5_nOzuHoaMrAi6Dtwh2oNqSQxNp0UjiHWGfdKyfq4Adxc8kCybgxJd5oDXwqHSPFark1a4UML8KTCCTrXPwYv8b3Zl7y3NACYGJzZ1cG2Ayy0xWMRs-pe-lysh5gnKqezh8OB89xQ6FhZkdVfIYJA5PAEg"/>
+<div>
+<p class="text-lg font-bold text-background-dark dark:text-background-light">Sophia Carter</p>
+<p class="text-sm text-black/60 dark:text-white/60">Municipality: Cape Town | Ward: 12</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="relative rounded-full p-2 text-background-dark dark:text-background-light hover:bg-black/10 dark:hover:bg-white/10">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">3</span>
+</button>
+<button class="rounded-full p-2 text-background-dark dark:text-background-light hover:bg-black/10 dark:hover:bg-white/10">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="p-4">
+<div class="mb-6 rounded-xl bg-primary/10 dark:bg-primary/20 p-4 flex items-center justify-between">
+<div class="flex-1">
+<p class="text-lg font-bold text-background-dark dark:text-background-light">Membership Status</p>
+<p class="text-lg font-bold text-primary">Active</p>
+<button class="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">
+              Digital Membership Card
+            </button>
+</div>
+<div class="w-24 h-16 bg-cover bg-center rounded-lg" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBfrO4E8AiacTXCUqDNcU11jkll2WsalD1LggMr9oLbzbgwMfc2PuvM_hn9KmFAf2_NTQI5TZ-dwjM5CX89o_9GaqMQ9cUUUfJ7Jn53cmPD52IPaB3EjgadFgMnHsLS4syNSD7TLLcHIj2geuPIZ5Zy7DcCf4_tDhaLb8dSqNN_HTBNgAFA0Yu2ZmwdN-zI8Pi5a5K_nDcQUEHc4ABB0xyAUZcZmNn8Z5-btiepzvsmV4E5tB8OPOQ6ShgxNQq064RcDEwmhVRcvw");'></div>
+</div>
+<div>
+<h2 class="text-xl font-bold text-background-dark dark:text-background-light mb-4">Civic Engagement</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="rounded-xl bg-background-light dark:bg-background-dark/50 p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary text-4xl">poll</span>
+<p class="mt-2 font-bold text-background-dark dark:text-background-light">Polls &amp; Surveys</p>
+</div>
+<div class="rounded-xl bg-background-light dark:bg-background-dark/50 p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary text-4xl">how_to_vote</span>
+<p class="mt-2 font-bold text-background-dark dark:text-background-light">Voting Info</p>
+</div>
+<div class="rounded-xl bg-background-light dark:bg-background-dark/50 p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary text-4xl">feedback</span>
+<p class="mt-2 font-bold text-background-dark dark:text-background-light">Give Feedback</p>
+</div>
+<div class="rounded-xl bg-background-light dark:bg-background-dark/50 p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary text-4xl">report</span>
+<p class="mt-2 font-bold text-background-dark dark:text-background-light">Report Issue</p>
+</div>
+</div>
+</div>
+<div class="mt-6">
+<h2 class="text-xl font-bold text-background-dark dark:text-background-light mb-4">Community Info</h2>
+<div class="space-y-3">
+<div class="rounded-lg bg-background-light dark:bg-background-dark/50 p-3 flex items-center gap-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary">event</span>
+<p class="text-background-dark dark:text-background-light">Upcoming Community Events</p>
+</div>
+<div class="rounded-lg bg-background-light dark:bg-background-dark/50 p-3 flex items-center gap-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none">
+<span class="material-symbols-outlined text-primary">campaign</span>
+<p class="text-background-dark dark:text-background-light">Local Announcements</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+<footer class="sticky bottom-0 z-10 border-t border-black/10 dark:border-white/10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<nav class="flex justify-around py-2">
+<a class="flex flex-col items-center justify-end gap-1 text-black/60 dark:text-white/60" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-xs font-medium">Home</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined">how_to_vote</span>
+<p class="text-xs font-bold">Civic</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-black/60 dark:text-white/60" href="#">
+<span class="material-symbols-outlined">build</span>
+<p class="text-xs font-medium">Services</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-black/60 dark:text-white/60" href="#">
+<span class="material-symbols-outlined">groups</span>
+<p class="text-xs font-medium">Community</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-black/60 dark:text-white/60" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-xs font-medium">Profile</p>
+</a>
+</nav>
+</footer>
+</div>
+
+</body></html>

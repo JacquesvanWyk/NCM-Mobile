@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1173d4",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Public Sans"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm px-4">
+<button>
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>
+</button>
+<h1 class="text-lg font-bold">Membership Card</h1>
+<div class="w-6"></div>
+</header>
+<main class="flex-1 overflow-y-auto px-4 pt-6 pb-24">
+<div class="mx-auto max-w-md">
+<div class="flex flex-col items-center space-y-4">
+<div class="relative">
+<div class="h-32 w-32 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkPYRMrwYB0ZzBhzkKuUxUt2Ic-Y6YvHUIuLRjcUBja0WfVfW-bNI0EAn9CRuvUTpZ7uGZKM_Cqk5W0RTd8Z_fxrDMjrYsZBmtaNAC_Am8hr6TbxctZvBWloyIFjq7CCZIVJp3ZZmfCDE5DFz00ofMN0tDX09_vs6PwVnhBliwzHWjOHvxbsMxcgPQnuSDgtctk7FLci4mWWd_-6Tn3xLO9ix31aSOdq374pqffSOqvrPv9sKTTy_XEnZxye94FiTK3ZtmPIfKag");'></div>
+<div class="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-green-500 border-2 border-background-light dark:border-background-dark flex items-center justify-center text-white text-xs font-bold">✓</div>
+</div>
+<div class="text-center">
+<p class="text-2xl font-bold text-gray-900 dark:text-white">Sophia Carter</p>
+<p class="text-gray-500 dark:text-gray-400">Member since 2022</p>
+<button class="mt-1 text-sm text-primary hover:underline">
+              Tap to show/hide details
+            </button>
+</div>
+</div>
+<div class="mt-8 space-y-6">
+<div class="overflow-hidden rounded-xl shadow-md bg-white dark:bg-gray-800/50">
+<div class="h-48 w-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAMpDc60kSFgLOk3_QZdPSUzfIQR1bDPqWGAl0pKSCw523bwSotYO6CKjMnsvSPdGNf53z88FhIvk3dv8fScFZsipQuByZjuyAOEmOQE3cjdWaDBrtd5XFGMUe08L-yrpMSUkhLuNwSOT13AQJKD_vp1LQ3m475O_VN40a9bYx_ZdaeQLnWimHP05XGyIFZobYhyJJ-Hkadh2mdCFyw1Lja49sr0xdnlYtUI2yEFr-RhVlLb2FGQUNrbqok6c2oAGZ9f6KsJbYsvw");'></div>
+<div class="p-4">
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400">Membership Number</p>
+<p class="text-xl font-mono font-semibold tracking-wider text-gray-800 dark:text-gray-200">1234 5678 90</p>
+</div>
+</div>
+<div class="flex justify-center">
+<button class="flex w-full max-w-xs items-center justify-center rounded-full h-12 px-6 bg-primary text-white text-base font-bold transition-transform active:scale-95">
+              Share Card
+            </button>
+</div>
+<div class="space-y-2 text-center text-sm text-gray-500 dark:text-gray-400">
+<p>Valid until December 31, 2024</p>
+<p>Status: <span class="font-semibold text-green-500">Active</span></p>
+<p>Offline Access Available</p>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200/50 dark:border-gray-700/50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="flex h-20 items-center justify-around px-4">
+<a class="flex flex-col items-center justify-center space-y-1 text-gray-500 dark:text-gray-400" href="#">
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77ZM208,208H160V160a16,16,0,0,0-16-16H112a16,16,0,0,0-16,16v48H48V115.55l.11-.1L128,40l79.9,75.43.11.1Z"></path></svg>
+<span class="text-xs">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center space-y-1 text-gray-500 dark:text-gray-400" href="#">
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M240,120a48.05,48.05,0,0,0-48-48H152.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,24,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,151.12,214l11,7.33A16,16,0,0,0,186.5,212l11.77-44.36A48.07,48.07,0,0,0,240,120ZM40,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C126.65,155,82.84,164.07,40,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM192,152H160V88h32a32,32,0,1,1,0,64Z"></path></svg>
+<span class="text-xs">Civic</span>
+</a>
+<a class="flex flex-col items-center justify-center space-y-1 text-gray-500 dark:text-gray-400" href="#">
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M220.2,100l-18-31.18a28,28,0,0,0-47.3-1.92L139.56,40.31a28,28,0,0,0-48.12-.63,28,28,0,0,0-43,34.78l3.34,5.79a28,28,0,0,0-22,41.92l38,65.82a87.46,87.46,0,0,0,53.43,41,88.56,88.56,0,0,0,22.92,3A88,88,0,0,0,220.2,100Zm-6.67,62.63A72,72,0,0,1,81.63,180l-38-65.82a12,12,0,0,1,20.79-12l22,38.1a8,8,0,1,0,13.85-8l-38-65.81a12,12,0,0,1,13.5-17.59,11.9,11.9,0,0,1,7.29,5.59l34,58.89a8,8,0,0,0,13.85-8l-26-45h0a12,12,0,0,1,20.78-12L160,107.78a48.08,48.08,0,0,0-11,61,8,8,0,0,0,13.86-8,32,32,0,0,1,11.71-43.71,8,8,0,0,0,2.93-10.93l-10-17.32a12,12,0,0,1,20.78-12l18,31.18A71.49,71.49,0,0,1,213.53,162.62ZM184.27,29.93a8,8,0,0,1,9.8-5.66c15.91,4.27,29,14.11,36.86,27.73a8,8,0,0,1-13.86,8c-5.72-9.92-15.36-17.12-27.14-20.27A8,8,0,0,1,184.27,29.93ZM80.91,237a8,8,0,0,1-11.24,1.33c-11-8.69-20.11-19.58-28.6-34.28a8,8,0,0,1,13.86-8c7.44,12.88,15.27,22.32,24.65,29.72A8,8,0,0,1,80.91,237Z"></path></svg>
+<span class="text-xs">Services</span>
+</a>
+<a class="flex flex-col items-center justify-center space-y-1 text-gray-500 dark:text-gray-400" href="#">
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path></svg>
+<span class="text-xs">Community</span>
+</a>
+<a class="flex flex-col items-center justify-center space-y-1 text-primary" href="#">
+<svg class="icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"></path></svg>
+<span class="text-xs font-bold">Profile</span>
+</a>
+</div>
+</nav>
+</div>
+
+</body></html>

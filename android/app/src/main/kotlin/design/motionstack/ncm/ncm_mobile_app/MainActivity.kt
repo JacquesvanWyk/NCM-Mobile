@@ -1,0 +1,5 @@
+package design.motionstack.ncm.ncm_mobile_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

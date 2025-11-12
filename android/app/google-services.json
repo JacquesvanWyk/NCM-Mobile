@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "748980851187",
+    "project_id": "namakwacivic",
+    "storage_bucket": "namakwacivic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748980851187:android:59a5fba5a2881eab570286",
+        "android_client_info": {
+          "package_name": "design.motionstack.ncm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNIL3VwT_pLaMfkwKjD9a4PMatZbnUhxE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
