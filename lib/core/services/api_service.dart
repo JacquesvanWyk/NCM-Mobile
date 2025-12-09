@@ -1164,6 +1164,7 @@ class PaymentModel {
   final String status;
   final DateTime createdAt;
   final String reference;
+  final int? yearsCovered;
 
   PaymentModel({
     required this.id,
@@ -1173,17 +1174,25 @@ class PaymentModel {
     required this.status,
     required this.createdAt,
     required this.reference,
+    this.yearsCovered,
   });
 
-  factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
-        id: json['id'],
-        amount: json['amount'],
-        currency: json['currency'],
-        description: json['description'],
-        status: json['status'],
-        createdAt: DateTime.parse(json['created_at']),
-        reference: json['reference'],
-      );
+  factory PaymentModel.fromJson(Map<String, dynamic> json) {
+    final yearsCovered = json['years_covered'] as int?;
+    return PaymentModel(
+      id: json['id'],
+      amount: json['amount']?.toString() ?? '0.00',
+      currency: json['currency'] ?? 'ZAR',
+      description: json['description'] ??
+          (yearsCovered != null
+              ? 'NCM Membership - $yearsCovered year${yearsCovered > 1 ? 's' : ''}'
+              : 'Membership Payment'),
+      status: json['status'] ?? 'unknown',
+      createdAt: DateTime.parse(json['created_at']),
+      reference: json['reference'] ?? json['payment_reference'] ?? '',
+      yearsCovered: yearsCovered,
+    );
+  }
 }
 
 class MembershipStatusResponse {
