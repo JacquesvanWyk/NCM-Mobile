@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/visit_model.dart';
+import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
 import '../../../core/services/api_service.dart';
 

@@ -8,6 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/services/api_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
 
 class DigitalMembershipCardPage extends ConsumerStatefulWidget {

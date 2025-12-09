@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import '../config/app_config.dart';
 import '../core/services/api_service.dart';
@@ -83,15 +85,38 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         // FCM token fetch failed, continue with 'unavailable'
       }
 
+      // Get device info
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      final packageInfo = await PackageInfo.fromPlatform();
+      String deviceId;
+      String deviceType;
+      String osVersion;
+      String deviceName;
+
+      if (Platform.isIOS) {
+        final iosInfo = await deviceInfoPlugin.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? 'unknown_ios';
+        deviceType = 'ios';
+        osVersion = iosInfo.systemVersion;
+        deviceName = iosInfo.name;
+      } else {
+        final androidInfo = await deviceInfoPlugin.androidInfo;
+        deviceId = androidInfo.id;
+        deviceType = 'android';
+        osVersion = androidInfo.version.release;
+        deviceName = androidInfo.model;
+      }
+
       // Make mobile login request with device info
       final loginRequest = MobileLoginRequest(
         email: email,
         password: password,
         deviceInfo: DeviceInfo(
-          deviceName: 'iOS Device',
-          deviceType: 'ios',
-          osVersion: '17.0',
-          appVersion: '1.0.0',
+          deviceName: deviceName,
+          deviceType: deviceType,
+          deviceId: deviceId,
+          osVersion: osVersion,
+          appVersion: packageInfo.version,
           fcmToken: fcmToken,
         ),
       );
@@ -100,50 +125,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       // Save token
       await AuthService.saveToken(authResponse.token);
 
-      // Create UserModel based on user type
-      UserModel userModel;
-      if (authResponse.userType == 'member') {
-        // Handle member response
-        final memberData = authResponse.user as MemberModel;
-        userModel = UserModel(
-          id: memberData.id,
-          name: memberData.displayFullName,
-          email: memberData.email ?? '',
-          userType: 'member',
-          member: memberData,
-          municipalities: [authResponse.municipality],
-          leader: null,
-          emailVerifiedAt: null,
-          createdAt: null,
-          updatedAt: null,
-        );
-      } else {
-        // Handle leader response
-        final userData = authResponse.user as Map<String, dynamic>;
-        final leaderData = userData['leader'] != null
-            ? LeaderModel.fromJson(userData['leader'])
-            : null;
-
-        userModel = UserModel(
-          id: userData['id'],
-          name: userData['name'],
-          email: userData['email'],
-          userType: authResponse.userType ?? 'leader',
-          member: null,
-          leader: leaderData,
-          municipalities: [authResponse.municipality],
-          emailVerifiedAt: null,
-          createdAt: null,
-          updatedAt: null,
-        );
-      }
-
-      await AuthService.saveUser(userModel);
+      // authResponse.user is already a UserModel parsed from JSON
+      // Just use it directly
+      await AuthService.saveUser(authResponse.user);
 
       // Cache credentials for offline login
       await AuthService.cacheCredentials(email, password);
 
-      state = AsyncValue.data(userModel);
+      state = AsyncValue.data(authResponse.user);
   }
 
   Future<bool> _tryOfflineLogin(String email, String password) async {

@@ -6,6 +6,7 @@ class Payment {
   final String status;
   final DateTime createdAt;
   final String reference;
+  final int? yearsCovered;
 
   Payment({
     required this.id,
@@ -15,17 +16,23 @@ class Payment {
     required this.status,
     required this.createdAt,
     required this.reference,
+    this.yearsCovered,
   });
 
-  factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        id: json['id'],
-        amount: json['amount'],
-        currency: json['currency'] ?? 'ZAR',
-        description: json['description'] ?? '',
-        status: json['status'],
-        createdAt: DateTime.parse(json['created_at']),
-        reference: json['reference'],
-      );
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    final yearsCovered = json['years_covered'] as int?;
+    return Payment(
+      id: json['id'],
+      amount: json['amount']?.toString() ?? '0.00',
+      currency: json['currency'] ?? 'ZAR',
+      description: json['description'] ??
+          (yearsCovered != null ? 'NCM Membership - $yearsCovered year${yearsCovered > 1 ? 's' : ''}' : 'Membership Payment'),
+      status: json['status'] ?? 'unknown',
+      createdAt: DateTime.parse(json['created_at']),
+      reference: json['reference'] ?? json['payment_reference'] ?? '',
+      yearsCovered: yearsCovered,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -35,5 +42,6 @@ class Payment {
         'status': status,
         'created_at': createdAt.toIso8601String(),
         'reference': reference,
+        'years_covered': yearsCovered,
       };
 }

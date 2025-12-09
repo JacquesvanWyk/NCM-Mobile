@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/visits_provider.dart' show apiServiceProvider;
+import '../../../providers/api_provider.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../data/models/user_model.dart';
 
@@ -94,23 +94,26 @@ class MembershipStatusNotifier extends StateNotifier<AsyncValue<MembershipStatus
       // Get membership status from API
       final apiStatus = await _apiService.getMembershipStatus();
 
-      // Calculate days until expiry
-      final now = DateTime.now();
-      int? daysUntilExpiry;
+      // Use API values directly, with local calculation as fallback
+      int? daysUntilExpiry = apiStatus.daysUntilExpiry;
       bool isExpiring = false;
 
       if (apiStatus.expiresAt != null) {
+        final now = DateTime.now();
         final expiryDate = apiStatus.expiresAt!;
         daysUntilExpiry = expiryDate.difference(now).inDays;
         isExpiring = daysUntilExpiry <= 30 && daysUntilExpiry > 0;
       }
+
+      // Use API's isExpired value - it's authoritative
+      final isExpired = apiStatus.isExpired || !apiStatus.isPaid;
 
       final membershipStatus = MembershipStatus(
         status: apiStatus.status,
         expiresAt: apiStatus.expiresAt,
         daysUntilExpiry: daysUntilExpiry,
         isExpiring: isExpiring,
-        isExpired: daysUntilExpiry != null && daysUntilExpiry < 0,
+        isExpired: isExpired,
         membershipNumber: member.membershipNumber ?? '',
       );
 

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/visits_provider.dart';
+import '../../../providers/api_provider.dart';
 import 'event_details_page.dart';
 
 class EventsPage extends ConsumerStatefulWidget {
@@ -78,8 +78,8 @@ class _EventsPageState extends ConsumerState<EventsPage>
 
       // Determine query parameters based on filter
       bool? upcomingOnly;
-      String? dateFrom;
-      String? dateTo;
+      DateTime? dateFrom;
+      DateTime? dateTo;
 
       final now = DateTime.now();
       switch (_currentFilter) {
@@ -92,7 +92,7 @@ class _EventsPageState extends ConsumerState<EventsPage>
           break;
         case 'past':
           // For past events, set dateTo to now
-          dateTo = now.toIso8601String();
+          dateTo = now;
           upcomingOnly = false;
           break;
       }
@@ -106,11 +106,11 @@ class _EventsPageState extends ConsumerState<EventsPage>
       );
 
       // Filter events if needed (for ongoing tab)
-      List<EventModel> filteredEvents = response.data;
+      List<EventModel> filteredEvents = response;
       if (_currentFilter == 'ongoing') {
-        filteredEvents = response.data.where((event) {
-          return event.startDate.isBefore(now.add(const Duration(hours: 24))) &&
-                 event.startDate.isAfter(now.subtract(const Duration(hours: 24)));
+        filteredEvents = response.where((event) {
+          return event.eventDate.isBefore(now.add(const Duration(hours: 24))) &&
+                 event.eventDate.isAfter(now.subtract(const Duration(hours: 24)));
         }).toList();
       }
 
@@ -263,7 +263,7 @@ class _EventCard extends StatelessWidget {
   });
 
   Color _getTypeColor() {
-    switch (event.type) {
+    switch (event.eventType) {
       case 'meeting':
         return Colors.blue;
       case 'workshop':
@@ -278,7 +278,7 @@ class _EventCard extends StatelessWidget {
   }
 
   String _getTypeText() {
-    return event.type.toUpperCase();
+    return (event.eventType ?? 'event').toUpperCase();
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -307,13 +307,21 @@ class _EventCard extends StatelessWidget {
   }
 
   bool _isEventFull() {
-    return event.isEventFull;
+    if (event.capacity == null) return false;
+    return event.totalAttending >= event.capacity!;
+  }
+
+  bool get _isRegistered => event.userRsvpStatus == 'attending';
+
+  int get _availableSpots {
+    if (event.capacity == null) return 999;
+    return event.capacity! - event.totalAttending;
   }
 
   @override
   Widget build(BuildContext context) {
-    final availableSpots = event.availableSpots;
-    final isEventInPast = event.endDate.isBefore(DateTime.now());
+    final availableSpots = _availableSpots;
+    final isEventInPast = event.eventDate.isBefore(DateTime.now());
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -347,7 +355,7 @@ class _EventCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (event.isRegistered) ...[
+                  if (_isRegistered) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -427,7 +435,7 @@ class _EventCard extends StatelessWidget {
                   ),
                   const Gap(4),
                   Text(
-                    _formatDateTime(event.startDate),
+                    _formatDateTime(event.eventDate),
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.textSecondary,
@@ -465,7 +473,9 @@ class _EventCard extends StatelessWidget {
                   ),
                   const Gap(4),
                   Text(
-                    '${event.currentAttendees} / ${event.maxAttendees} attendees',
+                    event.capacity != null
+                        ? '${event.totalAttending} / ${event.capacity} attendees'
+                        : '${event.totalAttending} attending',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.textSecondary,
@@ -491,9 +501,9 @@ class _EventCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: event.isRegistered || _isEventFull() ? null : onTap,
+                    onPressed: _isRegistered || _isEventFull() ? null : onTap,
                     child: Text(
-                      event.isRegistered
+                      _isRegistered
                         ? 'View Details'
                         : _isEventFull()
                           ? 'Event Full'

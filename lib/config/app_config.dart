@@ -15,7 +15,7 @@ class AppConfig {
   static String get _domainUrl {
     switch (_environment) {
       case Environment.development:
-        return 'http://192.168.3.1:8000';
+        return 'http://127.0.0.1:8000';
       case Environment.staging:
         return 'https://namakwacivic.org.za';
       case Environment.production:

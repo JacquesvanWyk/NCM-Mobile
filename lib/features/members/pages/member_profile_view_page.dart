@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
+import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/visit_model.dart';

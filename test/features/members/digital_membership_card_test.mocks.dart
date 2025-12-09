@@ -377,9 +377,19 @@ class _FakePushNotificationStatsResponse_31 extends _i1.SmartFake
         );
 }
 
-class _FakeEventRegistrationResponse_32 extends _i1.SmartFake
+class _FakeEventModel_32 extends _i1.SmartFake implements _i2.EventModel {
+  _FakeEventModel_32(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeEventRegistrationResponse_33 extends _i1.SmartFake
     implements _i2.EventRegistrationResponse {
-  _FakeEventRegistrationResponse_32(
+  _FakeEventRegistrationResponse_33(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -388,9 +398,9 @@ class _FakeEventRegistrationResponse_32 extends _i1.SmartFake
         );
 }
 
-class _FakeFeedbackResponse_33 extends _i1.SmartFake
+class _FakeFeedbackResponse_34 extends _i1.SmartFake
     implements _i2.FeedbackResponse {
-  _FakeFeedbackResponse_33(
+  _FakeFeedbackResponse_34(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -399,9 +409,9 @@ class _FakeFeedbackResponse_33 extends _i1.SmartFake
         );
 }
 
-class _FakePaymentResponse_34 extends _i1.SmartFake
+class _FakePaymentResponse_35 extends _i1.SmartFake
     implements _i2.PaymentResponse {
-  _FakePaymentResponse_34(
+  _FakePaymentResponse_35(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -410,9 +420,9 @@ class _FakePaymentResponse_34 extends _i1.SmartFake
         );
 }
 
-class _FakeMembershipStatusResponse_35 extends _i1.SmartFake
+class _FakeMembershipStatusResponse_36 extends _i1.SmartFake
     implements _i2.MembershipStatusResponse {
-  _FakeMembershipStatusResponse_35(
+  _FakeMembershipStatusResponse_36(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -1624,11 +1634,11 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
       ) as _i9.Future<_i2.PushNotificationStatsResponse>);
 
   @override
-  _i9.Future<_i2.PaginatedResponse<_i2.EventModel>> getEvents(
+  _i9.Future<List<_i2.EventModel>> getEvents(
     int? municipalityId, {
     bool? upcomingOnly,
-    String? dateFrom,
-    String? dateTo,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1640,47 +1650,62 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
             #dateTo: dateTo,
           },
         ),
-        returnValue: _i9.Future<_i2.PaginatedResponse<_i2.EventModel>>.value(
-            _FakePaginatedResponse_6<_i2.EventModel>(
-          this,
-          Invocation.method(
-            #getEvents,
-            [municipalityId],
-            {
-              #upcomingOnly: upcomingOnly,
-              #dateFrom: dateFrom,
-              #dateTo: dateTo,
-            },
-          ),
-        )),
-      ) as _i9.Future<_i2.PaginatedResponse<_i2.EventModel>>);
+        returnValue: _i9.Future<List<_i2.EventModel>>.value(<_i2.EventModel>[]),
+      ) as _i9.Future<List<_i2.EventModel>>);
 
   @override
-  _i9.Future<_i2.EventRegistrationResponse> registerForEvent(int? eventId) =>
+  _i9.Future<_i2.EventModel> getEventDetail(
+    int? municipalityId,
+    int? eventId,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
-          #registerForEvent,
-          [eventId],
+          #getEventDetail,
+          [
+            municipalityId,
+            eventId,
+          ],
         ),
-        returnValue: _i9.Future<_i2.EventRegistrationResponse>.value(
-            _FakeEventRegistrationResponse_32(
+        returnValue: _i9.Future<_i2.EventModel>.value(_FakeEventModel_32(
           this,
           Invocation.method(
-            #registerForEvent,
-            [eventId],
+            #getEventDetail,
+            [
+              municipalityId,
+              eventId,
+            ],
+          ),
+        )),
+      ) as _i9.Future<_i2.EventModel>);
+
+  @override
+  _i9.Future<_i2.EventRegistrationResponse> submitEventRsvp(
+    int? municipalityId,
+    int? eventId,
+    Map<String, dynamic>? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #submitEventRsvp,
+          [
+            municipalityId,
+            eventId,
+            request,
+          ],
+        ),
+        returnValue: _i9.Future<_i2.EventRegistrationResponse>.value(
+            _FakeEventRegistrationResponse_33(
+          this,
+          Invocation.method(
+            #submitEventRsvp,
+            [
+              municipalityId,
+              eventId,
+              request,
+            ],
           ),
         )),
       ) as _i9.Future<_i2.EventRegistrationResponse>);
-
-  @override
-  _i9.Future<void> cancelEventRegistration(int? eventId) => (super.noSuchMethod(
-        Invocation.method(
-          #cancelEventRegistration,
-          [eventId],
-        ),
-        returnValue: _i9.Future<void>.value(),
-        returnValueForMissingStub: _i9.Future<void>.value(),
-      ) as _i9.Future<void>);
 
   @override
   _i9.Future<_i2.FeedbackResponse> submitFeedback(
@@ -1691,7 +1716,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [request],
         ),
         returnValue:
-            _i9.Future<_i2.FeedbackResponse>.value(_FakeFeedbackResponse_33(
+            _i9.Future<_i2.FeedbackResponse>.value(_FakeFeedbackResponse_34(
           this,
           Invocation.method(
             #submitFeedback,
@@ -1708,7 +1733,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [request],
         ),
         returnValue:
-            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_34(
+            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_35(
           this,
           Invocation.method(
             #createPayment,
@@ -1725,7 +1750,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [paymentId],
         ),
         returnValue:
-            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_34(
+            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_35(
           this,
           Invocation.method(
             #retryPayment,
@@ -1760,7 +1785,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [],
         ),
         returnValue: _i9.Future<_i2.MembershipStatusResponse>.value(
-            _FakeMembershipStatusResponse_35(
+            _FakeMembershipStatusResponse_36(
           this,
           Invocation.method(
             #getMembershipStatus,

@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>design.motionstack.ncm.ncmMobileApp</string>
+	<string>design.motionstack.ncm-mobile</string>
 	<key>PROJECT_ID</key>
 	<string>namakwacivic</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:748980851187:ios:3e989a40d949d6b9570286</string>
+	<string>1:748980851187:ios:6ee42332c1ec9931570286</string>
 </dict>
 </plist>

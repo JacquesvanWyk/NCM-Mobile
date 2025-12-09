@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../providers/visits_provider.dart';
+import '../../../providers/api_provider.dart';
 import 'member_profile_view_page.dart';
 
 class QrScannerPage extends ConsumerStatefulWidget {

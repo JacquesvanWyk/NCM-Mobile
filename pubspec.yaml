@@ -96,7 +96,9 @@ dev_dependencies:
 patrol:
   app_name: NCM Mobile App
   ios:
-    bundle_id: com.ncm.mobile
+    bundle_id: design.motionstack.ncm-mobile
+  android:
+    package_name: design.motionstack.ncm.ncm_mobile_app
 
 flutter:
   uses-material-design: true

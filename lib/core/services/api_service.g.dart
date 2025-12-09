@@ -1404,7 +1404,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members/${id}/qr-code',
+          '/api/members/${id}/qr-code',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1438,7 +1438,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/qr-code/verify',
+          '/api/qr-code/verify',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1472,7 +1472,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/qr-code/create-visit',
+          '/api/qr-code/create-visit',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1512,7 +1512,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/polls',
+          '/api/v1/polls',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1547,7 +1547,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/polls/${pollId}',
+          '/api/v1/polls/${pollId}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1616,7 +1616,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/polls/${pollId}/statistics',
+          '/api/v1/polls/${pollId}/statistics',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2180,30 +2180,67 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<PaginatedResponse<EventModel>> getEvents(
+  Future<List<EventModel>> getEvents(
     int municipalityId, {
     bool? upcomingOnly,
-    String? dateFrom,
-    String? dateTo,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
-      r'municipality_id': municipalityId,
       r'upcoming_only': upcomingOnly,
-      r'date_from': dateFrom,
-      r'date_to': dateTo,
+      r'date_from': dateFrom?.toIso8601String(),
+      r'date_to': dateTo?.toIso8601String(),
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<PaginatedResponse<EventModel>>(Options(
+    final _options = _setStreamType<List<EventModel>>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
     )
         .compose(
           _dio.options,
-          '/api/events',
+          '/api/v1/municipalities/${municipalityId}/events',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<EventModel> _value;
+    try {
+      _value = _result.data!
+          .map((dynamic i) => EventModel.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<EventModel> getEventDetail(
+    int municipalityId,
+    int eventId,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<EventModel>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/municipalities/${municipalityId}/events/${eventId}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2213,12 +2250,9 @@ class _ApiService implements ApiService {
           baseUrl,
         )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late PaginatedResponse<EventModel> _value;
+    late EventModel _value;
     try {
-      _value = PaginatedResponse<EventModel>.fromJson(
-        _result.data!,
-        (json) => EventModel.fromJson(json as Map<String, dynamic>),
-      );
+      _value = EventModel.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
@@ -2227,11 +2261,16 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<EventRegistrationResponse> registerForEvent(int eventId) async {
+  Future<EventRegistrationResponse> submitEventRsvp(
+    int municipalityId,
+    int eventId,
+    Map<String, dynamic> request,
+  ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
+    final _data = <String, dynamic>{};
+    _data.addAll(request);
     final _options = _setStreamType<EventRegistrationResponse>(Options(
       method: 'POST',
       headers: _headers,
@@ -2239,7 +2278,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/events/${eventId}/register',
+          '/api/v1/municipalities/${municipalityId}/events/${eventId}/rsvp',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2257,31 +2296,6 @@ class _ApiService implements ApiService {
       rethrow;
     }
     return _value;
-  }
-
-  @override
-  Future<void> cancelEventRegistration(int eventId) async {
-    final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<void>(Options(
-      method: 'DELETE',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/events/${eventId}/register',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
-    await _dio.fetch<void>(_options);
   }
 
   @override
@@ -2333,7 +2347,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/payments',
+          '/api/v1/payments',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2366,7 +2380,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/payments/${paymentId}/retry',
+          '/api/v1/payments/${paymentId}/retry',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2399,7 +2413,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/payments/history',
+          '/api/v1/payments/history',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -2435,7 +2449,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/api/payments/membership-status',
+          '/api/v1/payments/membership-status',
           queryParameters: queryParameters,
           data: _data,
         )

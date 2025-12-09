@@ -3,6 +3,7 @@ import '../core/services/api_service.dart';
 import '../core/services/auth_service.dart';
 import '../data/models/user_model.dart';
 import 'visits_provider.dart';
+import 'api_provider.dart';
 
 // Members provider
 final membersProvider = StateNotifierProvider<MembersNotifier, AsyncValue<List<MemberModel>>>((ref) {

@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/api_provider.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/models/user_model.dart';
 
 final eventsProvider = StateNotifierProvider<EventsNotifier, AsyncValue<List<Event>>>((ref) {
   final apiService = ref.watch(apiServiceProvider);
@@ -33,40 +35,40 @@ class EventsNotifier extends StateNotifier<AsyncValue<List<Event>>> {
       state = const AsyncValue.loading();
 
       final user = _auth.valueOrNull;
-      if (user?.member?.municipalityId == null) {
+      final municipalityId = user?.member?.municipalityId;
+      if (municipalityId == null) {
         state = AsyncValue.error('No municipality access', StackTrace.current);
         return;
       }
 
-      final events = await _apiService.getEvents(
-        user!.member!.municipalityId,
+      final eventModels = await _apiService.getEvents(
+        municipalityId,
         upcomingOnly: upcomingOnly,
         dateFrom: dateFrom,
         dateTo: dateTo,
       );
 
-      // Add RSVP status to each event
-      final eventsWithRsvpStatus = <Event>[];
-      for (final event in events) {
-        final rsvpStatus = await _getUserRsvpStatus(event.id, user.member!.municipalityId);
-        eventsWithRsvpStatus.add(event.copyWith(
-          userRsvpStatus: rsvpStatus['status'],
-          userGuestsCount: rsvpStatus['guests_count'] ?? 0,
-        ));
-      }
+      // Convert EventModel to Event
+      final events = eventModels.map((e) => Event(
+        id: e.id,
+        municipalityId: e.municipalityId,
+        title: e.title,
+        description: e.description,
+        eventType: e.eventType,
+        eventDate: e.eventDate,
+        location: e.location,
+        capacity: e.capacity,
+        registrationRequired: e.registrationRequired,
+        registrationDeadline: e.registrationDeadline,
+        status: e.status,
+        userRsvpStatus: e.userRsvpStatus,
+        userGuestsCount: e.userGuestsCount,
+        totalAttending: e.totalAttending,
+      )).toList();
 
-      state = AsyncValue.data(eventsWithRsvpStatus);
+      state = AsyncValue.data(events);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
-    }
-  }
-
-  Future<Map<String, dynamic>> _getUserRsvpStatus(int eventId, int municipalityId) async {
-    try {
-      // This would be implemented based on API response
-      return {'status': null, 'guests_count': 0}; // Simplified for now
-    } catch (e) {
-      return {'status': null, 'guests_count': 0};
     }
   }
 
@@ -89,55 +91,40 @@ class EventDetailNotifier extends StateNotifier<AsyncValue<Event?>> {
       state = const AsyncValue.loading();
 
       final user = _auth.valueOrNull;
-      if (user?.member?.municipalityId == null) {
+      final municipalityId = user?.member?.municipalityId;
+      if (municipalityId == null) {
         state = AsyncValue.error('No municipality access', StackTrace.current);
         return;
       }
 
-      final event = await _apiService.getEventDetail(user!.member!.municipalityId, _eventId);
+      final eventModel = await _apiService.getEventDetail(municipalityId, _eventId);
 
-      // Add RSVP status and attendance statistics
-      final rsvpStatus = await _getUserRsvpStatus(_eventId, user.member!.municipalityId);
-      final stats = await _getEventStats(_eventId, user.member!.municipalityId);
-
-      final eventWithDetails = event.copyWith(
-        userRsvpStatus: rsvpStatus['status'],
-        userGuestsCount: rsvpStatus['guests_count'] ?? 0,
-        totalAttending: stats['total_attending'] ?? 0,
-        totalNotAttending: stats['total_not_attending'] ?? 0,
-        totalMaybe: stats['total_maybe'] ?? 0,
+      // Convert EventModel to Event
+      final event = Event(
+        id: eventModel.id,
+        municipalityId: eventModel.municipalityId,
+        title: eventModel.title,
+        description: eventModel.description,
+        eventType: eventModel.eventType,
+        eventDate: eventModel.eventDate,
+        location: eventModel.location,
+        capacity: eventModel.capacity,
+        registrationRequired: eventModel.registrationRequired,
+        registrationDeadline: eventModel.registrationDeadline,
+        status: eventModel.status,
+        userRsvpStatus: eventModel.userRsvpStatus,
+        userGuestsCount: eventModel.userGuestsCount,
+        totalAttending: eventModel.totalAttending,
       );
 
-      state = AsyncValue.data(eventWithDetails);
+      state = AsyncValue.data(event);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
   }
 
-  Future<Map<String, dynamic>> _getUserRsvpStatus(int eventId, int municipalityId) async {
-    try {
-      // Implementation would fetch user's RSVP status from API
-      return {'status': null, 'guests_count': 0};
-    } catch (e) {
-      return {'status': null, 'guests_count': 0};
-    }
-  }
-
-  Future<Map<String, int>> _getEventStats(int eventId, int municipalityId) async {
-    try {
-      // Implementation would fetch event attendance stats from API
-      return {
-        'total_attending': 0,
-        'total_not_attending': 0,
-        'total_maybe': 0,
-      };
-    } catch (e) {
-      return {
-        'total_attending': 0,
-        'total_not_attending': 0,
-        'total_maybe': 0,
-      };
-    }
+  Future<void> refresh() async {
+    await loadEventDetail();
   }
 }
 
@@ -166,45 +153,5 @@ class EventRsvpNotifier extends StateNotifier<AsyncValue<bool>> {
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
-  }
-
-  Future<void> addToCalendar(Event event, String calendarType) async {
-    try {
-      // Implementation would integrate with device calendar
-      // For now, just simulate success
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-}
-
-// Event model extension for UI state
-extension EventExtension on Event {
-  Event copyWith({
-    String? userRsvpStatus,
-    int? userGuestsCount,
-    int? totalAttending,
-    int? totalNotAttending,
-    int? totalMaybe,
-  }) {
-    return Event(
-      id: id,
-      title: title,
-      description: description,
-      location: location,
-      startsAt: startsAt,
-      endsAt: endsAt,
-      maxAttendees: maxAttendees,
-      requiresRsvp: requiresRsvp,
-      status: status,
-      municipalityId: municipalityId,
-      createdAt: createdAt,
-      userRsvpStatus: userRsvpStatus ?? this.userRsvpStatus,
-      userGuestsCount: userGuestsCount ?? this.userGuestsCount,
-      totalAttending: totalAttending ?? this.totalAttending,
-      totalNotAttending: totalNotAttending ?? this.totalNotAttending,
-      totalMaybe: totalMaybe ?? this.totalMaybe,
-    );
   }
 }

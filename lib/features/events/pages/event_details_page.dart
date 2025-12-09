@@ -25,7 +25,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _isRegistered = widget.event.isRegistered;
+    _isRegistered = widget.event.userRsvpStatus == 'attending';
   }
 
   Future<void> _registerForEvent() async {
@@ -128,7 +128,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   }
 
   Color _getTypeColor() {
-    switch (widget.event.type) {
+    switch (widget.event.eventType) {
       case 'meeting':
         return Colors.blue;
       case 'workshop':
@@ -143,40 +143,32 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   }
 
   String _getTypeText() {
-    return widget.event.type.toUpperCase();
+    return (widget.event.eventType ?? 'event').toUpperCase();
   }
 
   String _formatDateTime(DateTime dateTime) {
     return DateFormat('EEEE, MMMM dd, yyyy \'at\' hh:mm a').format(dateTime);
   }
 
-  String _formatDuration() {
-    final duration = widget.event.endDate.difference(widget.event.startDate);
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes % 60;
-
-    if (hours > 0 && minutes > 0) {
-      return '${hours}h ${minutes}m';
-    } else if (hours > 0) {
-      return '${hours}h';
-    } else {
-      return '${minutes}m';
-    }
-  }
-
   bool _isEventInPast() {
-    return widget.event.endDate.isBefore(DateTime.now());
+    return widget.event.eventDate.isBefore(DateTime.now());
   }
 
   bool _isEventFull() {
-    return widget.event.isEventFull;
+    if (widget.event.capacity == null) return false;
+    return widget.event.totalAttending >= widget.event.capacity!;
+  }
+
+  int get _availableSpots {
+    if (widget.event.capacity == null) return 999;
+    return widget.event.capacity! - widget.event.totalAttending;
   }
 
   @override
   Widget build(BuildContext context) {
     final isEventInPast = _isEventInPast();
     final isEventFull = _isEventFull();
-    final availableSpots = widget.event.availableSpots;
+    final availableSpots = _availableSpots;
 
     return Scaffold(
       appBar: AppBar(
@@ -209,13 +201,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
                   ],
                 ),
               ),
-              child: widget.event.imageUrl != null
-                  ? Image.network(
-                      widget.event.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildDefaultEventHeader(),
-                    )
-                  : _buildDefaultEventHeader(),
+              child: _buildDefaultEventHeader(),
             ),
 
             Padding(
@@ -310,23 +296,19 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Starts: ${_formatDateTime(widget.event.startDate)}',
+                          _formatDateTime(widget.event.eventDate),
                           style: const TextStyle(fontSize: 14),
                         ),
-                        const Gap(4),
-                        Text(
-                          'Ends: ${_formatDateTime(widget.event.endDate)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const Gap(4),
-                        Text(
-                          'Duration: ${_formatDuration()}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textSecondary,
-                            fontWeight: FontWeight.w500,
+                        if (widget.event.registrationDeadline != null) ...[
+                          const Gap(4),
+                          Text(
+                            'Register by: ${_formatDateTime(widget.event.registrationDeadline!)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textSecondary,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -351,20 +333,22 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${widget.event.currentAttendees} / ${widget.event.maxAttendees ?? 'unlimited'} registered',
+                          widget.event.capacity != null
+                              ? '${widget.event.totalAttending} / ${widget.event.capacity} registered'
+                              : '${widget.event.totalAttending} attending',
                           style: const TextStyle(fontSize: 14),
                         ),
                         const Gap(8),
-                        if (widget.event.maxAttendees != null)
+                        if (widget.event.capacity != null)
                           LinearProgressIndicator(
-                            value: widget.event.currentAttendees / widget.event.maxAttendees!,
+                            value: widget.event.totalAttending / widget.event.capacity!,
                             backgroundColor: Colors.grey.shade200,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               isEventFull ? Colors.red : AppTheme.primaryColor,
                             ),
                           ),
                         const Gap(4),
-                        if (!isEventInPast && !isEventFull)
+                        if (!isEventInPast && !isEventFull && widget.event.capacity != null)
                           Text(
                             '$availableSpots spots remaining',
                             style: TextStyle(

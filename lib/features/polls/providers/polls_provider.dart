@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
 import '../../../data/models/poll_model.dart' as poll;
 import '../../../data/models/user_model.dart';

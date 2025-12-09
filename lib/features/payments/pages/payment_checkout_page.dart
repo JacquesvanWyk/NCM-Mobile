@@ -27,11 +27,27 @@ class PaymentCheckoutPage extends ConsumerStatefulWidget {
 class _PaymentCheckoutPageState extends ConsumerState<PaymentCheckoutPage> {
   bool _agreedToTerms = false;
   bool _isProcessing = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _processPayment() {
     if (!_agreedToTerms) return;
 
     setState(() => _isProcessing = true);
+
+    // Auto-scroll to show the PayFast WebView after state updates
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   String _generateSignature(Map<String, String> data, String passphrase) {
@@ -73,8 +89,10 @@ class _PaymentCheckoutPageState extends ConsumerState<PaymentCheckoutPage> {
         .map((key) => '$key=${Uri.encodeComponent(filteredData[key]!.trim()).replaceAll('%20', '+')}')
         .join('&');
 
-    // Add passphrase at the end
-    final stringToHash = '$params&passphrase=$passphrase';
+    // Add passphrase at the end ONLY if it's not empty
+    final stringToHash = passphrase.isNotEmpty
+        ? '$params&passphrase=${Uri.encodeComponent(passphrase)}'
+        : params;
 
     // Generate MD5 hash
     final bytes = utf8.encode(stringToHash);
@@ -319,20 +337,38 @@ class _PaymentCheckoutPageState extends ConsumerState<PaymentCheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    // When processing, show full-screen WebView for PayFast
+    if (_isProcessing) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('PayFast Payment'),
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              setState(() => _isProcessing = false);
+            },
+          ),
+        ),
+        body: _buildPayFastWebView(),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Payment Checkout'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
-        leading: !_isProcessing
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(false),
-              )
-            : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,30 +561,20 @@ class _PaymentCheckoutPageState extends ConsumerState<PaymentCheckoutPage> {
             const Gap(32),
 
             // Payment Button
-            if (!_isProcessing)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _agreedToTerms ? _processPayment : null,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.green,
-                  ),
-                  child: Text(
-                    'Proceed to PayFast - R${widget.amount.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _agreedToTerms ? _processPayment : null,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.green,
+                ),
+                child: Text(
+                  'Proceed to PayFast - R${widget.amount.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
-
-            // Show PayFast WebView when processing
-            if (_isProcessing) ...[
-              const Gap(24),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: _buildPayFastWebView(),
-              ),
-            ],
+            ),
           ],
         ),
       ),

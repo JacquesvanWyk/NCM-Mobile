@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart' hide OptionStatistic, PollStatisticsResponse;
-import '../../../providers/visits_provider.dart';
+import '../../../providers/api_provider.dart';
 import '../../../data/models/poll_statistics_response.dart';
 
 /// Provider for poll statistics functionality

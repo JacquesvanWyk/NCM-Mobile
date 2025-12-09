@@ -197,25 +197,25 @@ abstract class ApiService {
   Future<MunicipalityModel> getMunicipality(@Path('id') int id);
 
   // QR Code endpoints
-  @POST('/members/{id}/qr-code')
+  @POST('/api/members/{id}/qr-code')
   Future<QrCodeResponse> generateMemberQrCode(@Path('id') int id);
 
-  @POST('/qr-code/verify')
+  @POST('/api/qr-code/verify')
   Future<QrVerifyResponse> verifyQrCode(@Body() QrVerifyRequest request);
 
-  @POST('/qr-code/create-visit')
+  @POST('/api/qr-code/create-visit')
   Future<VisitModel> createVisitFromQr(@Body() QrCreateVisitRequest request);
 
   // Constitutional requirement: Mobile app features (FR-001 to FR-024)
 
-  // Polls endpoints (ApiPlatform generated)
-  @GET('/api/polls')
+  // Polls endpoints
+  @GET('/api/v1/polls')
   Future<List<PollModel>> getPolls(
     @Query('page') int page,
     @Query('status') String? status,
   );
 
-  @GET('/api/polls/{pollId}')
+  @GET('/api/v1/polls/{pollId}')
   Future<PollModel> getPollDetails(@Path('pollId') int pollId);
 
   @POST('/api/v1/polls/{pollId}/vote')
@@ -224,7 +224,7 @@ abstract class ApiService {
     @Body() VoteSubmissionRequest request,
   );
 
-  @GET('/api/polls/{pollId}/statistics')
+  @GET('/api/v1/polls/{pollId}/statistics')
   Future<PollStatisticsWrapper> getPollStatistics(@Path('pollId') int pollId);
 
   // Announcements endpoints (ApiPlatform generated)
@@ -295,20 +295,27 @@ abstract class ApiService {
   @GET('/api/v1/push-notifications/stats')
   Future<PushNotificationStatsResponse> getPushNotificationStats();
 
-  // Events endpoints (ApiPlatform generated)
-  @GET('/api/events')
-  Future<PaginatedResponse<EventModel>> getEvents(
-    @Query('municipality_id') int municipalityId, {
+  // Events endpoints
+  @GET('/api/v1/municipalities/{municipalityId}/events')
+  Future<List<EventModel>> getEvents(
+    @Path('municipalityId') int municipalityId, {
     @Query('upcoming_only') bool? upcomingOnly,
-    @Query('date_from') String? dateFrom,
-    @Query('date_to') String? dateTo,
+    @Query('date_from') DateTime? dateFrom,
+    @Query('date_to') DateTime? dateTo,
   });
 
-  @POST('/api/events/{eventId}/register')
-  Future<EventRegistrationResponse> registerForEvent(@Path('eventId') int eventId);
+  @GET('/api/v1/municipalities/{municipalityId}/events/{eventId}')
+  Future<EventModel> getEventDetail(
+    @Path('municipalityId') int municipalityId,
+    @Path('eventId') int eventId,
+  );
 
-  @DELETE('/api/events/{eventId}/register')
-  Future<void> cancelEventRegistration(@Path('eventId') int eventId);
+  @POST('/api/v1/municipalities/{municipalityId}/events/{eventId}/rsvp')
+  Future<EventRegistrationResponse> submitEventRsvp(
+    @Path('municipalityId') int municipalityId,
+    @Path('eventId') int eventId,
+    @Body() Map<String, dynamic> request,
+  );
 
   // Feedback endpoints (ApiPlatform generated)
   @POST('/api/feedback')
@@ -316,18 +323,18 @@ abstract class ApiService {
   Future<FeedbackResponse> submitFeedback(@Body() FeedbackRequest request);
 
   // Payment endpoints (Constitutional requirement: FR-015)
-  @POST('/api/payments')
+  @POST('/api/v1/payments')
   Future<PaymentResponse> createPayment(@Body() PaymentRequest request);
 
-  @POST('/api/payments/{paymentId}/retry')
+  @POST('/api/v1/payments/{paymentId}/retry')
   Future<PaymentResponse> retryPayment(@Path('paymentId') int paymentId);
 
-  @GET('/api/payments/history')
+  @GET('/api/v1/payments/history')
   Future<PaginatedResponse<PaymentModel>> getPaymentHistory(
     @Query('page') int page,
   );
 
-  @GET('/api/payments/membership-status')
+  @GET('/api/v1/payments/membership-status')
   Future<MembershipStatusResponse> getMembershipStatus();
 }
 
@@ -374,6 +381,7 @@ class MobileLoginRequest {
 class DeviceInfo {
   final String deviceName;
   final String deviceType;
+  final String deviceId;
   final String osVersion;
   final String appVersion;
   final String? fcmToken;
@@ -381,6 +389,7 @@ class DeviceInfo {
   DeviceInfo({
     required this.deviceName,
     required this.deviceType,
+    required this.deviceId,
     required this.osVersion,
     required this.appVersion,
     this.fcmToken,
@@ -389,9 +398,10 @@ class DeviceInfo {
   Map<String, dynamic> toJson() => {
         'device_name': deviceName,
         'device_type': deviceType,
+        'device_id': deviceId,
         'os_version': osVersion,
         'app_version': appVersion,
-        'fcm_token': fcmToken,
+        'fcm_token': fcmToken ?? 'unavailable',
       };
 }
 
@@ -413,14 +423,19 @@ class PaginatedResponse<T> {
   factory PaginatedResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJson,
-  ) =>
-      PaginatedResponse(
-        data: (json['data'] as List).map((e) => fromJson(e)).toList(),
-        currentPage: json['current_page'],
-        lastPage: json['last_page'],
-        total: json['total'],
-        perPage: json['per_page'],
-      );
+  ) {
+    // Check if pagination is in meta object (Laravel format) or at root level
+    final meta = json['meta'] as Map<String, dynamic>?;
+    final hasMeta = meta != null;
+
+    return PaginatedResponse(
+      data: (json['data'] as List).map((e) => fromJson(e)).toList(),
+      currentPage: hasMeta ? meta['current_page'] : json['current_page'],
+      lastPage: hasMeta ? meta['last_page'] : json['last_page'],
+      total: hasMeta ? meta['total'] : json['total'],
+      perPage: hasMeta ? meta['per_page'] : json['per_page'],
+    );
+  }
 }
 
 // Request models for creating/updating resources
@@ -980,48 +995,61 @@ class AnnouncementModel {
 // Event models
 class EventModel {
   final int id;
+  final int municipalityId;
   final String title;
   final String description;
-  final DateTime startDate;
-  final DateTime endDate;
+  final String? eventType;
+  final DateTime eventDate;
   final String location;
-  final String type;
-  final int maxAttendees;
-  final int currentAttendees;
-  final bool isRegistered;
-  final String? imageUrl;
+  final int? capacity;
+  final bool registrationRequired;
+  final DateTime? registrationDeadline;
+  final String status;
+  final String? userRsvpStatus;
+  final int userGuestsCount;
+  final int totalAttending;
 
   EventModel({
     required this.id,
+    required this.municipalityId,
     required this.title,
     required this.description,
-    required this.startDate,
-    required this.endDate,
+    this.eventType,
+    required this.eventDate,
     required this.location,
-    required this.type,
-    required this.maxAttendees,
-    required this.currentAttendees,
-    required this.isRegistered,
-    this.imageUrl,
+    this.capacity,
+    required this.registrationRequired,
+    this.registrationDeadline,
+    required this.status,
+    this.userRsvpStatus,
+    this.userGuestsCount = 0,
+    this.totalAttending = 0,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) => EventModel(
         id: json['id'],
-        title: json['title'],
-        description: json['description'],
-        startDate: DateTime.parse(json['start_date']),
-        endDate: DateTime.parse(json['end_date']),
-        location: json['location'],
-        type: json['type'],
-        maxAttendees: json['max_attendees'] ?? 0,
-        currentAttendees: json['current_attendees'] ?? 0,
-        isRegistered: json['is_registered'] ?? false,
-        imageUrl: json['image_url'],
+        municipalityId: json['municipality_id'] ?? 0,
+        title: json['title'] ?? '',
+        description: json['description'] ?? '',
+        eventType: json['event_type'],
+        eventDate: json['event_date'] != null
+            ? DateTime.parse(json['event_date'])
+            : DateTime.now(),
+        location: json['location'] ?? '',
+        capacity: json['capacity'],
+        registrationRequired: json['registration_required'] ?? false,
+        registrationDeadline: json['registration_deadline'] != null
+            ? DateTime.parse(json['registration_deadline'])
+            : null,
+        status: json['status'] ?? 'published',
+        userRsvpStatus: json['user_rsvp_status'],
+        userGuestsCount: json['user_guests_count'] ?? 0,
+        totalAttending: json['total_attending'] ?? 0,
       );
 
   // Computed getters
-  bool get isEventFull => currentAttendees >= maxAttendees;
-  int get availableSpots => maxAttendees - currentAttendees;
+  bool get isEventFull => capacity != null && totalAttending >= capacity!;
+  int get availableSpots => capacity != null ? capacity! - totalAttending : 999;
 }
 
 class EventRegistrationResponse {
@@ -1165,6 +1193,9 @@ class MembershipStatusResponse {
   final bool paymentDue;
   final String? nextPaymentAmount;
   final DateTime? nextPaymentDate;
+  final int? daysUntilExpiry;
+  final bool isExpired;
+  final bool isPaid;
 
   MembershipStatusResponse({
     required this.isActive,
@@ -1173,21 +1204,32 @@ class MembershipStatusResponse {
     required this.paymentDue,
     this.nextPaymentAmount,
     this.nextPaymentDate,
+    this.daysUntilExpiry,
+    this.isExpired = false,
+    this.isPaid = false,
   });
 
-  factory MembershipStatusResponse.fromJson(Map<String, dynamic> json) =>
-      MembershipStatusResponse(
-        isActive: json['is_active'] ?? false,
-        expiresAt: json['expires_at'] != null
-            ? DateTime.parse(json['expires_at'])
-            : null,
-        status: json['status'],
-        paymentDue: json['payment_due'] ?? false,
-        nextPaymentAmount: json['next_payment_amount'],
-        nextPaymentDate: json['next_payment_date'] != null
-            ? DateTime.parse(json['next_payment_date'])
-            : null,
-      );
+  factory MembershipStatusResponse.fromJson(Map<String, dynamic> json) {
+    // Handle nested membership object from API
+    final data = json['membership'] ?? json;
+
+    final isExpired = data['is_expired'] ?? false;
+    final isPaid = data['is_paid'] ?? false;
+
+    return MembershipStatusResponse(
+      isActive: !isExpired && isPaid,
+      expiresAt: data['expires_at'] != null
+          ? DateTime.parse(data['expires_at'])
+          : null,
+      status: data['status'] ?? 'inactive',
+      paymentDue: isExpired || !isPaid,
+      nextPaymentAmount: data['renewal_amount']?.toString(),
+      nextPaymentDate: null,
+      daysUntilExpiry: data['days_until_expiry'],
+      isExpired: isExpired,
+      isPaid: isPaid,
+    );
+  }
 }
 
 // FindMemberByMembershipNumberResponse

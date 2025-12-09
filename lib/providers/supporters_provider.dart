@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/api_service.dart';
 import '../core/services/auth_service.dart';
 import '../data/models/supporter_model.dart';
-import 'visits_provider.dart';
+import 'api_provider.dart';
 
 // Supporters provider
 final supportersProvider = StateNotifierProvider<SupportersNotifier, AsyncValue<List<SupporterModel>>>((ref) {

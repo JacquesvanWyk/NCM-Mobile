@@ -11,7 +11,7 @@ final offlineSyncServiceProvider = Provider<OfflineSyncService>((ref) {
 });
 
 // Connectivity provider
-final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
+final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
   return Connectivity().onConnectivityChanged;
 });
 
