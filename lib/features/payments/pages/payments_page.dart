@@ -372,12 +372,6 @@ class _PaymentsPageState extends ConsumerState<PaymentsPage>
                   ),
                   const Gap(12),
                   _buildBenefitItem(
-                    Icons.support_agent,
-                    'Priority Support',
-                    'Faster response to service requests and complaints',
-                  ),
-                  const Gap(12),
-                  _buildBenefitItem(
                     Icons.card_membership,
                     'Digital Membership Card',
                     'Access to digital identity verification',

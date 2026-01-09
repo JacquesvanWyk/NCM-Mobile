@@ -4,8 +4,10 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/visit_model.dart';
 import '../../visits/pages/visit_notes_page.dart';
@@ -87,21 +89,26 @@ class _MemberProfileViewPageState extends ConsumerState<MemberProfileViewPage> {
     try {
       setState(() => _isLoading = true);
 
-      final apiService = ref.read(apiServiceProvider);
+      // Get current leader from AuthService (more reliable than provider)
+      final leader = await AuthService.getLeaderProfile();
+      if (leader == null) {
+        throw Exception('Leader profile not found. Please log out and log in again.');
+      }
 
-      // Create visit using membership number
-      final response = await apiService.createVisitFromMembership(
-        CreateVisitFromMembershipRequest(
-          membershipNumber: _member!.membershipNumber ?? '',
-          leaderId: 0, // TODO: Get current leader ID
-        ),
+      // Create visit using visitsProvider with member_id
+      final visit = await ref.read(visitsProvider.notifier).createVisit(
+        memberId: _member!.id,
+        leaderId: leader.id,
+        visitType: 'Door-to-Door',
+        visitDate: DateTime.now(),
+        locationAddress: _member!.address,
       );
 
       if (mounted) {
         // Navigate to visit notes page
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => VisitNotesPage(visit: response),
+            builder: (_) => VisitNotesPage(visit: visit),
           ),
         );
       }
@@ -124,100 +131,21 @@ class _MemberProfileViewPageState extends ConsumerState<MemberProfileViewPage> {
   Future<void> _logComplaint() async {
     if (_member == null) return;
 
-    final complaintController = TextEditingController();
-    String selectedCategory = 'Service Delivery';
-
-    await showDialog(
+    final result = await showDialog<Map<String, String>?>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Log Complaint'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Member: ${_member!.displayFullName}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Gap(16),
-                const Text('Category:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                const Gap(8),
-                DropdownButtonFormField<String>(
-                  value: selectedCategory,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: [
-                    'Service Delivery',
-                    'Infrastructure',
-                    'Safety',
-                    'Other',
-                  ].map((category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedCategory = value;
-                      });
-                    }
-                  },
-                ),
-                const Gap(16),
-                const Text('Description:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                const Gap(8),
-                TextField(
-                  controller: complaintController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter complaint details...',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 5,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (complaintController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter complaint details'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.of(context).pop();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Complaint logged: $selectedCategory'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
+      builder: (dialogContext) => _ComplaintDialog(
+        memberName: _member!.displayFullName,
       ),
     );
 
-    complaintController.dispose();
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Complaint logged: ${result['category']}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Future<void> _updateContact() async {
@@ -612,6 +540,109 @@ class _MemberProfileViewPageState extends ConsumerState<MemberProfileViewPage> {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ComplaintDialog extends StatefulWidget {
+  final String memberName;
+
+  const _ComplaintDialog({required this.memberName});
+
+  @override
+  State<_ComplaintDialog> createState() => _ComplaintDialogState();
+}
+
+class _ComplaintDialogState extends State<_ComplaintDialog> {
+  final _complaintController = TextEditingController();
+  String _selectedCategory = 'Service Delivery';
+
+  @override
+  void dispose() {
+    _complaintController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Log Complaint'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Member: ${widget.memberName}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Gap(16),
+            const Text('Category:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            const Gap(8),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              items: [
+                'Service Delivery',
+                'Infrastructure',
+                'Safety',
+                'Other',
+              ].map((category) {
+                return DropdownMenuItem(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedCategory = value;
+                  });
+                }
+              },
+            ),
+            const Gap(16),
+            const Text('Description:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            const Gap(8),
+            TextField(
+              controller: _complaintController,
+              decoration: const InputDecoration(
+                hintText: 'Enter complaint details...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 5,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_complaintController.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter complaint details'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              return;
+            }
+
+            Navigator.of(context).pop({
+              'category': _selectedCategory,
+              'description': _complaintController.text,
+            });
+          },
+          child: const Text('Submit'),
         ),
       ],
     );

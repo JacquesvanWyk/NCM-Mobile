@@ -27,18 +27,18 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
 
+  // Set environment FIRST (before initializing API client)
+  AppConfig.setEnvironment(Environment.production);
+
   // Initialize services
   await AuthService.init();
 
-  // Initialize API client
+  // Initialize API client (uses AppConfig.baseUrl which depends on environment)
   ApiClient().initialize();
 
   // Initialize FCM service
   await FcmService().initialize();
   await FcmService().setupMessageHandlers();
-
-  // Set environment (can be changed based on build configuration)
-  AppConfig.setEnvironment(Environment.production);
 
   runApp(
     const ProviderScope(

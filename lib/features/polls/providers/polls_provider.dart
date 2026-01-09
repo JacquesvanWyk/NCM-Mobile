@@ -52,11 +52,11 @@ class PollsNotifier extends StateNotifier<AsyncValue<List<poll.PollModel>>> {
         final hasVoted = await _checkUserHasVoted(apiPoll.id, user?.member?.municipalityId ?? 0);
 
         // Convert options from API service PollOptionModel list to JSON string
-        final optionsJson = jsonEncode(apiPoll.options.map((option) => {
+        final optionsJson = jsonEncode(apiPoll.options.map((option) => ({
           'id': option.id,
           'text': option.text,
           'vote_count': option.voteCount,
-        }).toList());
+        })).toList());
 
         // Convert from API service PollModel to our Freezed PollModel
         final convertedPoll = poll.PollModel(
@@ -116,11 +116,11 @@ class PollDetailNotifier extends StateNotifier<AsyncValue<poll.PollModel?>> {
       final apiPoll = await _apiService.getPollDetails(_pollId);
 
       // Convert options from API service PollOptionModel list to JSON string
-      final optionsJson = jsonEncode(apiPoll.options.map((option) => {
+      final optionsJson = jsonEncode(apiPoll.options.map((option) => ({
         'id': option.id,
         'text': option.text,
         'vote_count': option.voteCount,
-      }).toList());
+      })).toList());
 
       // Convert from API service PollModel to our Freezed PollModel
       final convertedPoll = poll.PollModel(

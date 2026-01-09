@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/location_service.dart';
 import '../../../data/models/visit_model.dart';
 import '../../../providers/visits_provider.dart';
 import '../../members/pages/quick_registration_page.dart';
@@ -27,6 +29,9 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
   DateTime? _checkOutTime;
   String? _selectedOutcome;
   List<String> _capturedPhotos = [];
+  Position? _checkInPosition;
+  int _sentimentScore = 5;
+  String _memberSatisfaction = 'Satisfied';
 
   final List<String> _outcomeOptions = [
     'Member Visited Successfully',
@@ -37,6 +42,14 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
     'New Registration Completed',
     'Issue Resolved',
     'Complaint Logged',
+  ];
+
+  final List<String> _satisfactionOptions = [
+    'Very Satisfied',
+    'Satisfied',
+    'Neutral',
+    'Dissatisfied',
+    'Very Dissatisfied',
   ];
 
   @override
@@ -59,6 +72,8 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text('Visit Execution'),
         actions: [
           if (_isCheckedIn)
@@ -381,11 +396,138 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
                   ),
                 ),
               ),
+
+              const Gap(16),
+
+              // Member Satisfaction
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Member Satisfaction',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Gap(12),
+                      DropdownButtonFormField<String>(
+                        value: _memberSatisfaction,
+                        decoration: const InputDecoration(
+                          labelText: 'How satisfied was the member?',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _satisfactionOptions.map((option) {
+                          return DropdownMenuItem(
+                            value: option,
+                            child: Text(option),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _memberSatisfaction = value ?? 'Satisfied';
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Gap(16),
+
+              // Sentiment Score
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Sentiment Score',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getSentimentColor(_sentimentScore).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$_sentimentScore/10',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _getSentimentColor(_sentimentScore),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Gap(8),
+                      Text(
+                        'Rate the overall sentiment of the visit',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const Gap(16),
+                      Slider(
+                        value: _sentimentScore.toDouble(),
+                        min: 1,
+                        max: 10,
+                        divisions: 9,
+                        activeColor: _getSentimentColor(_sentimentScore),
+                        label: _sentimentScore.toString(),
+                        onChanged: (value) {
+                          setState(() {
+                            _sentimentScore = value.round();
+                          });
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Negative',
+                            style: TextStyle(fontSize: 12, color: Colors.red.shade400),
+                          ),
+                          Text(
+                            'Neutral',
+                            style: TextStyle(fontSize: 12, color: Colors.orange.shade400),
+                          ),
+                          Text(
+                            'Positive',
+                            style: TextStyle(fontSize: 12, color: Colors.green.shade400),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ],
         ),
       ),
     );
+  }
+
+  Color _getSentimentColor(int score) {
+    if (score <= 3) return Colors.red;
+    if (score <= 5) return Colors.orange;
+    if (score <= 7) return Colors.amber;
+    return Colors.green;
   }
 
   Widget _buildInfoRow(IconData icon, String text) {
@@ -427,34 +569,52 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Get real GPS coordinates
+      final position = await LocationService.getCurrentLocation();
+      if (position == null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not get location. Please enable location services.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
       // Real API call for check-in
       final updatedVisit = await ref.read(visitsProvider.notifier).checkInToVisit(
         widget.visit.id,
-        latitude: 0.0, // TODO: Get real GPS coordinates
-        longitude: 0.0, // TODO: Get real GPS coordinates
+        latitude: position?.latitude ?? 0.0,
+        longitude: position?.longitude ?? 0.0,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
       setState(() {
         _isCheckedIn = true;
         _checkInTime = DateTime.now();
+        _checkInPosition = position;
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully checked in to visit'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(position != null
+                ? 'Checked in with GPS location'
+                : 'Checked in (location unavailable)'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Check-in failed: ${e.toString()}'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Check-in failed: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -472,16 +632,19 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Get real GPS coordinates
+      final position = await LocationService.getCurrentLocation();
+
       // Real API call for check-out
       final updatedVisit = await ref.read(visitsProvider.notifier).checkOutFromVisit(
         widget.visit.id,
-        latitude: 0.0, // TODO: Get real GPS coordinates
-        longitude: 0.0, // TODO: Get real GPS coordinates
+        latitude: position?.latitude ?? 0.0,
+        longitude: position?.longitude ?? 0.0,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         outcome: _selectedOutcome,
-        sentimentScore: 7, // Default sentiment score
-        memberSatisfaction: 'Satisfied', // Default satisfaction
-        issuesIdentified: [], // TODO: Add issues if any
+        sentimentScore: _sentimentScore,
+        memberSatisfaction: _memberSatisfaction,
+        issuesIdentified: [],
         followUpRequired: _selectedOutcome?.contains('Follow-up') ?? false,
       );
 
@@ -491,25 +654,29 @@ class _VisitExecutionPageState extends ConsumerState<VisitExecutionPage> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully checked out. Visit completed!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully checked out. Visit completed!'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-      // Navigate back after a delay
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) Navigator.pop(context, true);
-      });
+        // Navigate back after a delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) Navigator.pop(context, true);
+        });
+      }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Check-out failed: ${e.toString()}'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Check-out failed: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 

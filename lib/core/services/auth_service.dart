@@ -188,8 +188,17 @@ class AuthService {
 
   static Future<int?> getCurrentMunicipalityId() async {
     final user = await getUser();
+    // First try municipalities pivot table
     if (user?.municipalities?.isNotEmpty == true) {
       return user!.municipalities!.first.id;
+    }
+    // Fallback to leader's municipality_id
+    if (user?.leader?.municipalityId != null) {
+      return user!.leader!.municipalityId;
+    }
+    // Fallback to member's municipality_id
+    if (user?.member?.municipalityId != null) {
+      return user!.member!.municipalityId;
     }
     return null;
   }

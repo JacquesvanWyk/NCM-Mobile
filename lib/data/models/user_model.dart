@@ -45,7 +45,7 @@ class MemberModel with _$MemberModel {
     @JsonKey(name: 'tel_number') String? telNumber,
     @JsonKey(name: 'alternative_phone') String? alternativePhone,
     String? address,
-    MunicipalityModel? municipality,
+    @JsonKey(fromJson: _municipalityFromJson) MunicipalityModel? municipality,
     String? town,
     String? ward,
     String? status,
@@ -74,10 +74,10 @@ class MemberModel with _$MemberModel {
 class LeaderModel with _$LeaderModel {
   const factory LeaderModel({
     required int id,
-    @JsonKey(name: 'user_id') required int userId,
-    @JsonKey(name: 'municipality_id') required int municipalityId,
-    required String name,
-    required String surname,
+    @JsonKey(name: 'user_id') @Default(0) int userId,
+    @JsonKey(name: 'municipality_id') @Default(0) int municipalityId,
+    @Default('') String name,
+    @Default('') String surname,
     String? picture,
     @JsonKey(name: 'id_number') String? idNumber,
     String? nationality,
@@ -92,8 +92,8 @@ class LeaderModel with _$LeaderModel {
     @JsonKey(name: 'criminal_activities') String? criminalActivities,
     String? cv,
     String? contribution,
-    required String status,
-    required String level,
+    @Default('active') String status,
+    @Default('Field Worker') String level,
     @JsonKey(name: 'paid') @BoolConverter() bool? paid,
     @JsonKey(name: 'user_sms_id') String? userSmsId,
     @JsonKey(name: 'assigned_municipality_id') int? assignedMunicipalityId,
@@ -127,4 +127,21 @@ class MunicipalityModel with _$MunicipalityModel {
 
   factory MunicipalityModel.fromJson(Map<String, dynamic> json) =>
       _$MunicipalityModelFromJson(json);
+}
+
+/// Converts municipality field which can be either a String or a Map
+MunicipalityModel? _municipalityFromJson(dynamic json) {
+  if (json == null) return null;
+  if (json is String) {
+    // API returns municipality as a string name
+    return MunicipalityModel(
+      id: 0,
+      name: json,
+      province: '',
+    );
+  }
+  if (json is Map<String, dynamic>) {
+    return MunicipalityModel.fromJson(json);
+  }
+  return null;
 }

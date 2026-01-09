@@ -560,11 +560,11 @@ class __$$VisitModelImplCopyWithImpl<$Res>
 class _$VisitModelImpl implements _VisitModel {
   const _$VisitModelImpl(
       {required this.id,
-      @JsonKey(name: 'member_id') required this.memberId,
+      @JsonKey(name: 'member_id') this.memberId = 0,
       @JsonKey(name: 'field_worker_id') this.fieldWorkerId,
       @JsonKey(name: 'leader_id') this.leaderId,
       @JsonKey(name: 'municipality_id') this.municipalityId,
-      @JsonKey(name: 'visit_type') required this.visitType,
+      @JsonKey(name: 'visit_type') this.visitType = 'Door-to-Door',
       @JsonKey(name: 'scheduled_date') this.scheduledDate,
       @JsonKey(name: 'actual_date') this.actualDate,
       @JsonKey(name: 'visit_date') this.visitDate,
@@ -819,11 +819,11 @@ class _$VisitModelImpl implements _VisitModel {
 abstract class _VisitModel implements VisitModel {
   const factory _VisitModel(
       {required final int id,
-      @JsonKey(name: 'member_id') required final int memberId,
+      @JsonKey(name: 'member_id') final int memberId,
       @JsonKey(name: 'field_worker_id') final int? fieldWorkerId,
       @JsonKey(name: 'leader_id') final int? leaderId,
       @JsonKey(name: 'municipality_id') final int? municipalityId,
-      @JsonKey(name: 'visit_type') required final String visitType,
+      @JsonKey(name: 'visit_type') final String visitType,
       @JsonKey(name: 'scheduled_date') final DateTime? scheduledDate,
       @JsonKey(name: 'actual_date') final DateTime? actualDate,
       @JsonKey(name: 'visit_date') final DateTime? visitDate,
@@ -1139,11 +1139,11 @@ class __$$VisitNoteModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$VisitNoteModelImpl implements _VisitNoteModel {
   const _$VisitNoteModelImpl(
-      {required this.id,
-      @JsonKey(name: 'visit_id') required this.visitId,
-      @JsonKey(name: 'field_worker_id') required this.fieldWorkerId,
+      {this.id = 0,
+      @JsonKey(name: 'visit_id') this.visitId = 0,
+      @JsonKey(name: 'field_worker_id') this.fieldWorkerId = 0,
       @JsonKey(name: 'note_type') this.noteType = 'General',
-      required this.content,
+      this.content = '',
       @JsonKey(name: 'is_private') this.isPrivate = false,
       final List<String>? attachments,
       @JsonKey(name: 'created_at') this.createdAt,
@@ -1154,6 +1154,7 @@ class _$VisitNoteModelImpl implements _VisitNoteModel {
       _$$VisitNoteModelImplFromJson(json);
 
   @override
+  @JsonKey()
   final int id;
   @override
   @JsonKey(name: 'visit_id')
@@ -1165,6 +1166,7 @@ class _$VisitNoteModelImpl implements _VisitNoteModel {
   @JsonKey(name: 'note_type')
   final String noteType;
   @override
+  @JsonKey()
   final String content;
   @override
   @JsonKey(name: 'is_private')
@@ -1244,11 +1246,11 @@ class _$VisitNoteModelImpl implements _VisitNoteModel {
 
 abstract class _VisitNoteModel implements VisitNoteModel {
   const factory _VisitNoteModel(
-          {required final int id,
-          @JsonKey(name: 'visit_id') required final int visitId,
-          @JsonKey(name: 'field_worker_id') required final int fieldWorkerId,
+          {final int id,
+          @JsonKey(name: 'visit_id') final int visitId,
+          @JsonKey(name: 'field_worker_id') final int fieldWorkerId,
           @JsonKey(name: 'note_type') final String noteType,
-          required final String content,
+          final String content,
           @JsonKey(name: 'is_private') final bool isPrivate,
           final List<String>? attachments,
           @JsonKey(name: 'created_at') final DateTime? createdAt,

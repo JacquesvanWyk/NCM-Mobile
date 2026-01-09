@@ -269,7 +269,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members',
+          '/api/members',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -305,7 +305,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members/${id}',
+          '/api/members/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -339,7 +339,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members',
+          '/api/members',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -376,7 +376,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members/${id}',
+          '/api/members/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -409,7 +409,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/members/search',
+          '/api/members/search',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -591,7 +591,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/leaders',
+          '/api/leaders',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -627,7 +627,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/leaders/${id}',
+          '/api/leaders/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -677,7 +677,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits',
+          '/api/visits',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -714,7 +714,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits',
+          '/api/visits',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -747,7 +747,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}',
+          '/api/visits/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -784,7 +784,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}',
+          '/api/visits/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -821,7 +821,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}/assign',
+          '/api/visits/${id}/assign',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -858,7 +858,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}/check-in',
+          '/api/visits/${id}/check-in',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -895,7 +895,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}/check-out',
+          '/api/visits/${id}/check-out',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -928,7 +928,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/${id}',
+          '/api/visits/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -956,7 +956,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/leaders/${leaderId}/visits',
+          '/api/leaders/${leaderId}/visits',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1003,7 +1003,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visits/sentiment/stats',
+          '/api/visits/sentiment/stats',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1043,7 +1043,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visit-notes',
+          '/api/visit-notes',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1080,7 +1080,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/visit-notes',
+          '/api/visit-notes',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1126,7 +1126,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaints',
+          '/api/complaints',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1163,7 +1163,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaints',
+          '/api/complaints',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1196,7 +1196,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaints/${id}',
+          '/api/complaints/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1233,7 +1233,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaints/${id}',
+          '/api/complaints/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1266,7 +1266,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaint-categories',
+          '/api/complaint-categories',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1302,7 +1302,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/complaint-categories/${id}',
+          '/api/complaint-categories/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1335,7 +1335,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/municipalities',
+          '/api/municipalities',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1371,7 +1371,7 @@ class _ApiService implements ApiService {
     )
         .compose(
           _dio.options,
-          '/municipalities/${id}',
+          '/api/municipalities/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -1818,6 +1818,68 @@ class _ApiService implements ApiService {
       rethrow;
     }
     return _value;
+  }
+
+  @override
+  Future<CreateSupporterResponse> updateSupporter(
+    int id,
+    CreateSupporterRequest request,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<CreateSupporterResponse>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/supporters/${id}',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late CreateSupporterResponse _value;
+    try {
+      _value = CreateSupporterResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<void> deleteSupporter(int id) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/supporters/${id}',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    await _dio.fetch<void>(_options);
   }
 
   @override
@@ -2334,6 +2396,107 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<MemberComplaintResponse> submitMemberComplaint(
+      MemberComplaintRequest request) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<MemberComplaintResponse>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/member/complaints',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late MemberComplaintResponse _value;
+    try {
+      _value = MemberComplaintResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<MemberComplaintsListResponse> getMemberComplaints() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<MemberComplaintsListResponse>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/member/complaints',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late MemberComplaintsListResponse _value;
+    try {
+      _value = MemberComplaintsListResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<MemberComplaintDetailResponse> getMemberComplaintDetail(int id) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<MemberComplaintDetailResponse>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/member/complaints/${id}',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late MemberComplaintDetailResponse _value;
+    try {
+      _value = MemberComplaintDetailResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<PaymentResponse> createPayment(PaymentRequest request) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -2467,6 +2630,140 @@ class _ApiService implements ApiService {
       rethrow;
     }
     return _value;
+  }
+
+  @override
+  Future<ProfileResponse> getProfile() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ProfileResponse>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/profile',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ProfileResponse _value;
+    try {
+      _value = ProfileResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ProfileUpdateResponse> updateProfile(
+      UpdateProfileRequest request) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<ProfileUpdateResponse>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/profile',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ProfileUpdateResponse _value;
+    try {
+      _value = ProfileUpdateResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<PhotoUploadResponse> uploadProfilePhoto(File photo) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = FormData();
+    _data.files.add(MapEntry(
+      'photo',
+      MultipartFile.fromFileSync(
+        photo.path,
+        filename: photo.path.split(Platform.pathSeparator).last,
+      ),
+    ));
+    final _options = _setStreamType<PhotoUploadResponse>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/profile/photo',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late PhotoUploadResponse _value;
+    try {
+      _value = PhotoUploadResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<void> deleteProfilePhoto() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/profile/photo',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    await _dio.fetch<void>(_options);
   }
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {

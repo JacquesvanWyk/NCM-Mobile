@@ -8,21 +8,26 @@ class PollModel with _$PollModel {
   const factory PollModel({
     required int id,
     required String title,
-    required String description,
-    @JsonKey(name: 'poll_type') required String pollType,
+    String? description,
+    @JsonKey(name: 'poll_type') String? pollType,
     required String options, // JSON string from API Platform
     required String status,
-    @JsonKey(name: 'starts_at') required DateTime startsAt,
-    @JsonKey(name: 'ends_at') required DateTime endsAt,
-    @JsonKey(name: 'is_public') required bool isPublic,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
-    @JsonKey(name: 'has_voted') @Default(false) bool hasVoted,
+    @JsonKey(name: 'starts_at') DateTime? startsAt,
+    @JsonKey(name: 'ends_at') DateTime? endsAt,
+    @JsonKey(name: 'is_public') @Default(true) bool isPublic,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
+    @JsonKey(name: 'has_voted', readValue: _readHasVoted) @Default(false) bool hasVoted,
     @Default([]) List<dynamic> results,
     String? municipality, // API Platform relation URL
   }) = _PollModel;
 
   factory PollModel.fromJson(Map<String, dynamic> json) => _$PollModelFromJson(json);
+}
+
+// Helper to handle both 'has_voted' and 'hasVoted' from API
+Object? _readHasVoted(Map<dynamic, dynamic> json, String key) {
+  return json['has_voted'] ?? json['hasVoted'] ?? false;
 }
 
 @freezed

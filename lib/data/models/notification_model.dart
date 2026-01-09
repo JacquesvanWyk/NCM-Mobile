@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class NotificationModel {
   final String id;
   final String type;
@@ -14,10 +16,25 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    // Handle data field - can be either a Map or a JSON string
+    Map<String, dynamic> dataMap = {};
+    final rawData = json['data'];
+    if (rawData is Map<String, dynamic>) {
+      dataMap = rawData;
+    } else if (rawData is String) {
+      try {
+        dataMap = Map<String, dynamic>.from(
+          (const JsonDecoder().convert(rawData)) as Map,
+        );
+      } catch (_) {
+        dataMap = {};
+      }
+    }
+
     return NotificationModel(
       id: json['id'] as String,
       type: json['type'] as String,
-      data: json['data'] as Map<String, dynamic>? ?? {},
+      data: dataMap,
       readAt: json['read_at'] != null
           ? DateTime.parse(json['read_at'] as String)
           : null,
@@ -38,7 +55,7 @@ class NotificationModel {
   bool get isRead => readAt != null;
 
   String get title => data['title'] as String? ?? 'Notification';
-  String get body => data['body'] as String? ?? '';
+  String get body => data['body'] as String? ?? data['message'] as String? ?? '';
   String? get icon => data['icon'] as String?;
   String? get clickAction => data['click_action'] as String?;
 

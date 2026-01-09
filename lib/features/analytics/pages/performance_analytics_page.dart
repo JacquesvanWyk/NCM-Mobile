@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../providers/analytics_provider.dart';
 
 class PerformanceAnalyticsPage extends ConsumerStatefulWidget {
   const PerformanceAnalyticsPage({super.key});
@@ -13,14 +14,6 @@ class PerformanceAnalyticsPage extends ConsumerStatefulWidget {
 class _PerformanceAnalyticsPageState extends ConsumerState<PerformanceAnalyticsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedPeriod = 'This Month';
-
-  final List<String> _periodOptions = [
-    'This Week',
-    'This Month',
-    'Last 3 Months',
-    'This Year',
-  ];
 
   @override
   void initState() {
@@ -37,731 +30,314 @@ class _PerformanceAnalyticsPageState extends ConsumerState<PerformanceAnalyticsP
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Performance Analytics'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.date_range),
-            onSelected: (value) {
-              setState(() {
-                _selectedPeriod = value;
-              });
-              _refreshData();
-            },
-            itemBuilder: (context) => _periodOptions.map((period) {
-              return PopupMenuItem(
-                value: period,
-                child: Row(
-                  children: [
-                    Icon(
-                      _selectedPeriod == period ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                      size: 16,
-                      color: _selectedPeriod == period ? AppTheme.primaryColor : Colors.grey,
-                    ),
-                    const Gap(8),
-                    Text(period),
-                  ],
+      backgroundColor: Colors.grey.shade50,
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            expandedHeight: 140,
+            floating: false,
+            pinned: true,
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 0, bottom: 60),
+              centerTitle: true,
+              title: const Text(
+                'Reports',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
                 ),
-              );
-            }).toList(),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.primaryColor.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ref.invalidate(analyticsProvider),
+              ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+              tabs: const [
+                Tab(text: 'Overview'),
+                Tab(text: 'Members'),
+                Tab(text: 'Supporters'),
+              ],
+            ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Overview'),
-            Tab(text: 'Members'),
-            Tab(text: 'Supporters'),
-          ],
+        body: ref.watch(analyticsProvider).when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                const Gap(16),
+                Text('Failed to load analytics', style: TextStyle(color: AppTheme.textSecondary)),
+                const Gap(8),
+                TextButton(
+                  onPressed: () => ref.invalidate(analyticsProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+          data: (data) => TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOverviewTab(data),
+              _buildMembersTab(data),
+              _buildSupportersTab(data),
+            ],
+          ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildOverviewTab(),
-          _buildMembersTab(),
-          _buildSupportersTab(),
-        ],
-      ),
     );
   }
 
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(AnalyticsData data) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Period Header
-          Row(
-            children: [
-              Text(
-                _selectedPeriod,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.trending_up, size: 16, color: Colors.green.shade600),
-                    const Gap(4),
-                    Text(
-                      '↑ 12.5%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const Gap(20),
-
-          // Key Metrics Cards
+          // Key Metrics Grid
           Row(
             children: [
               Expanded(
                 child: _buildMetricCard(
-                  'Visits Completed',
-                  '156',
-                  Icons.location_on,
-                  Colors.blue.shade100,
-                  Colors.blue.shade600,
-                  '+23 from last period',
+                  title: 'Total Visits',
+                  value: data.totalVisits.toString(),
+                  icon: Icons.location_on_rounded,
+                  color: Colors.blue,
+                  subtitle: '${data.completedVisits} completed',
                 ),
               ),
               const Gap(12),
               Expanded(
                 child: _buildMetricCard(
-                  'New Members',
-                  '43',
-                  Icons.person_add,
-                  Colors.green.shade100,
-                  Colors.green.shade600,
-                  '+8 from last period',
+                  title: 'Members',
+                  value: data.totalMembers.toString(),
+                  icon: Icons.people_rounded,
+                  color: Colors.green,
+                  subtitle: '${data.activeMembers} active',
                 ),
               ),
             ],
           ),
-
           const Gap(12),
-
           Row(
             children: [
               Expanded(
                 child: _buildMetricCard(
-                  'Issues Resolved',
-                  '29',
-                  Icons.check_circle,
-                  Colors.orange.shade100,
-                  Colors.orange.shade600,
-                  '+12 from last period',
+                  title: 'Supporters',
+                  value: data.totalSupporters.toString(),
+                  icon: Icons.favorite_rounded,
+                  color: Colors.orange,
+                  subtitle: '${data.registeredVoters} voters',
                 ),
               ),
               const Gap(12),
               Expanded(
                 child: _buildMetricCard(
-                  'Avg Visit Time',
-                  '24m',
-                  Icons.timer,
-                  Colors.purple.shade100,
-                  Colors.purple.shade600,
-                  '-3m improvement',
+                  title: 'Satisfaction',
+                  value: '${data.satisfactionScore.toStringAsFixed(0)}%',
+                  icon: Icons.sentiment_satisfied_rounded,
+                  color: Colors.purple,
+                  subtitle: 'Member rating',
                 ),
               ),
             ],
           ),
 
-          const Gap(24),
+          const Gap(28),
 
-          // Performance Score
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Performance Score',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '89/100',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                            Text(
-                              'Excellent Performance',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          children: [
-                            _buildScoreBar('Visit Completion', 0.95, Colors.blue),
-                            const Gap(8),
-                            _buildScoreBar('Member Satisfaction', 0.87, Colors.green),
-                            const Gap(8),
-                            _buildScoreBar('Response Time', 0.82, Colors.orange),
-                            const Gap(8),
-                            _buildScoreBar('Goal Achievement', 0.91, Colors.purple),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
+          // Weekly Activity
+          _buildSectionHeader('Weekly Activity', Icons.show_chart_rounded),
           const Gap(16),
+          _buildWeeklyActivityChart(data.weeklyActivity),
 
-          // Activity Chart
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Weekly Activity',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  SizedBox(
-                    height: 200,
-                    child: _buildActivityChart(),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const Gap(28),
 
+          // Visit Status Breakdown
+          _buildSectionHeader('Visit Status', Icons.pie_chart_rounded),
           const Gap(16),
+          _buildVisitStatusCard(data),
 
-          // Recent Achievements
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Recent Achievements',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildAchievementItem(
-                    'Top Performer',
-                    'Highest visit completion rate this month',
-                    Icons.star,
-                    Colors.amber,
-                  ),
-                  const Gap(12),
-                  _buildAchievementItem(
-                    'Member Favorite',
-                    '95% satisfaction rating from members',
-                    Icons.favorite,
-                    Colors.red,
-                  ),
-                  const Gap(12),
-                  _buildAchievementItem(
-                    'Problem Solver',
-                    'Resolved 50+ community issues',
-                    Icons.lightbulb,
-                    Colors.blue,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const Gap(28),
+
+          // Quick Stats
+          _buildSectionHeader('Quick Stats', Icons.speed_rounded),
+          const Gap(16),
+          _buildQuickStatsCard(data),
+
+          const Gap(100),
         ],
       ),
     );
   }
 
-  Widget _buildMembersTab() {
+  Widget _buildMembersTab(AnalyticsData data) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Member Stats
+          // Member Stats Cards
           Row(
             children: [
-              Expanded(
-                child: _buildStatCard('Registered', '43', Colors.green),
-              ),
-              const Gap(12),
-              Expanded(
-                child: _buildStatCard('Updated', '67', Colors.blue),
-              ),
-              const Gap(12),
-              Expanded(
-                child: _buildStatCard('Verified', '38', Colors.purple),
-              ),
+              Expanded(child: _buildStatPill('Total', data.totalMembers, Colors.blue)),
+              const Gap(8),
+              Expanded(child: _buildStatPill('Active', data.activeMembers, Colors.green)),
+              const Gap(8),
+              Expanded(child: _buildStatPill('Pending', data.pendingMembers, Colors.orange)),
             ],
           ),
 
-          const Gap(20),
+          const Gap(28),
 
-          // Registration Methods
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Registration Methods',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildMethodItem('Manual Entry', 25, Colors.blue),
-                  const Gap(12),
-                  _buildMethodItem('OCR Scanning', 18, Colors.purple),
-                ],
-              ),
-            ),
-          ),
-
+          // Member Activity
+          _buildSectionHeader('Member Status', Icons.person_rounded),
           const Gap(16),
+          _buildMemberStatusCard(data),
 
-          // Member Demographics
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Member Demographics',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildDemographicItem('18-30 years', 28, Colors.green),
-                  const Gap(8),
-                  _buildDemographicItem('31-45 years', 35, Colors.blue),
-                  const Gap(8),
-                  _buildDemographicItem('46-60 years', 23, Colors.orange),
-                  const Gap(8),
-                  _buildDemographicItem('60+ years', 14, Colors.red),
-                ],
-              ),
-            ),
-          ),
+          const Gap(28),
 
-          const Gap(16),
+          // Satisfaction Breakdown
+          if (data.satisfactionDistribution != null && data.satisfactionDistribution!.isNotEmpty) ...[
+            _buildSectionHeader('Satisfaction Breakdown', Icons.sentiment_satisfied_alt_rounded),
+            const Gap(16),
+            _buildSatisfactionCard(data),
+          ],
 
-          // Member Satisfaction
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Member Satisfaction',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade300, width: 8),
-                              ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 0.87,
-                                    strokeWidth: 8,
-                                    backgroundColor: Colors.grey.shade300,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-                                  ),
-                                  const Center(
-                                    child: Text(
-                                      '87%',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Gap(8),
-                            const Text('Average Score'),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSatisfactionItem('Very Satisfied', 52, Colors.green),
-                            const Gap(8),
-                            _buildSatisfactionItem('Satisfied', 35, Colors.lightGreen),
-                            const Gap(8),
-                            _buildSatisfactionItem('Neutral', 10, Colors.orange),
-                            const Gap(8),
-                            _buildSatisfactionItem('Unsatisfied', 3, Colors.red),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const Gap(100),
         ],
       ),
     );
   }
 
-  Widget _buildSupportersTab() {
+  Widget _buildSupportersTab(AnalyticsData data) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Supporter Stats
           Row(
             children: [
-              Expanded(
-                child: _buildStatCard('Total', '287', Colors.purple),
-              ),
-              const Gap(12),
-              Expanded(
-                child: _buildStatCard('Active', '245', Colors.green),
-              ),
-              const Gap(12),
-              Expanded(
-                child: _buildStatCard('New', '42', Colors.blue),
-              ),
+              Expanded(child: _buildStatPill('Total', data.totalSupporters, Colors.purple)),
+              const Gap(8),
+              Expanded(child: _buildStatPill('Approved', data.approvedSupporters, Colors.green)),
+              const Gap(8),
+              Expanded(child: _buildStatPill('Voters', data.registeredVoters, Colors.blue)),
             ],
           ),
 
-          const Gap(20),
+          const Gap(28),
 
           // Voting Statistics
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Voting Statistics',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade300, width: 8),
-                              ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 0.78,
-                                    strokeWidth: 8,
-                                    backgroundColor: Colors.grey.shade300,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-                                  ),
-                                  const Center(
-                                    child: Text(
-                                      '78%',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Gap(8),
-                            const Text('Registered Voters'),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildVotingStatItem('Registered Voters', 224, Colors.green),
-                            const Gap(8),
-                            _buildVotingStatItem('Active Voters', 198, Colors.blue),
-                            const Gap(8),
-                            _buildVotingStatItem('Special Vote', 45, Colors.orange),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
+          _buildSectionHeader('Voting Statistics', Icons.how_to_vote_rounded),
           const Gap(16),
+          _buildVotingStatsCard(data),
 
-          // Supporter Status Breakdown
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Status Breakdown',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildStatusItem('Active', 245, Colors.green),
-                  const Gap(12),
-                  _buildStatusItem('Pending', 28, Colors.orange),
-                  const Gap(12),
-                  _buildStatusItem('Inactive', 14, Colors.red),
-                ],
-              ),
-            ),
-          ),
-
-          const Gap(16),
+          const Gap(28),
 
           // Ward Distribution
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Ward Distribution',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildWardItem('Ward 1', 68, Colors.blue),
-                  const Gap(8),
-                  _buildWardItem('Ward 2', 52, Colors.green),
-                  const Gap(8),
-                  _buildWardItem('Ward 3', 71, Colors.orange),
-                  const Gap(8),
-                  _buildWardItem('Ward 4', 45, Colors.purple),
-                  const Gap(8),
-                  _buildWardItem('Ward 5', 51, Colors.red),
-                ],
-              ),
-            ),
-          ),
+          if (data.wardDistribution.isNotEmpty) ...[
+            _buildSectionHeader('Ward Distribution', Icons.map_rounded),
+            const Gap(16),
+            _buildWardDistributionCard(data),
+          ],
 
-          const Gap(16),
-
-          // Recent Registrations
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Recent Registrations',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildRegistrationTrend('This Week', 42, Colors.green),
-                  const Gap(8),
-                  _buildRegistrationTrend('Last Week', 38, Colors.blue),
-                  const Gap(8),
-                  _buildRegistrationTrend('Two Weeks Ago', 29, Colors.orange),
-                ],
-              ),
-            ),
-          ),
+          const Gap(100),
         ],
       ),
     );
   }
 
-  Widget _buildGoalsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  // Widget Builders
+
+  Widget _buildMetricCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Goal Progress
-          const Text(
-            'Monthly Goals Progress',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const Gap(16),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -1,
             ),
           ),
-          const Gap(16),
-
-          _buildGoalCard(
-            'Visits Completed',
-            156,
-            180,
-            Icons.location_on,
-            Colors.blue,
+          const Gap(4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary,
+            ),
           ),
-          const Gap(16),
-
-          _buildGoalCard(
-            'New Registrations',
-            43,
-            50,
-            Icons.person_add,
-            Colors.green,
-          ),
-          const Gap(16),
-
-          _buildGoalCard(
-            'Issues Resolved',
-            29,
-            35,
-            Icons.check_circle,
-            Colors.orange,
-          ),
-          const Gap(16),
-
-          _buildGoalCard(
-            'Member Satisfaction',
-            87,
-            90,
-            Icons.star,
-            Colors.purple,
-          ),
-
-          const Gap(24),
-
-          // Upcoming Targets
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Upcoming Targets',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Gap(16),
-                  _buildTargetItem(
-                    'Complete 200 visits',
-                    'Next Month',
-                    Icons.flag,
-                    Colors.blue,
-                  ),
-                  const Gap(12),
-                  _buildTargetItem(
-                    'Register 60 new members',
-                    'Next Month',
-                    Icons.group_add,
-                    Colors.green,
-                  ),
-                  const Gap(12),
-                  _buildTargetItem(
-                    'Achieve 95% satisfaction',
-                    'Quarter Goal',
-                    Icons.sentiment_very_satisfied,
-                    Colors.amber,
-                  ),
-                ],
+          const Gap(8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
               ),
             ),
           ),
@@ -770,511 +346,578 @@ class _PerformanceAnalyticsPageState extends ConsumerState<PerformanceAnalyticsP
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color bgColor, Color iconColor, String subtitle) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 20),
-                ),
-                const Spacer(),
-              ],
-            ),
-            const Gap(12),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const Gap(4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-            const Gap(8),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.green,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScoreBar(String label, double progress, Color color) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-        const Gap(8),
-        Text(
-          '${(progress * 100).toInt()}%',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityChart() {
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final values = [20, 35, 28, 42, 38, 15, 25];
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: List.generate(days.length, (index) {
-        final height = (values[index] / maxValue) * 150;
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: 30,
-              height: height,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const Gap(8),
-            Text(
-              days[index],
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        );
-      }),
-    );
-  }
-
-  Widget _buildAchievementItem(String title, String description, IconData icon, Color color) {
+  Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, size: 18, color: AppTheme.primaryColor),
         ),
         const Gap(12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ],
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.3,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+  Widget _buildWeeklyActivityChart(Map<String, int> activity) {
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final maxValue = activity.values.isEmpty ? 1 : activity.values.reduce((a, b) => a > b ? a : b);
+    final effectiveMax = maxValue == 0 ? 1 : maxValue;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 160,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: days.map((day) {
+                final value = activity[day] ?? 0;
+                final height = (value / effectiveMax) * 120;
+                final isToday = DateTime.now().weekday == days.indexOf(day) + 1;
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      value.toString(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isToday ? AppTheme.primaryColor : AppTheme.textSecondary,
+                      ),
+                    ),
+                    const Gap(6),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 32,
+                      height: height < 8 ? 8 : height,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isToday
+                              ? [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.7)]
+                              : [Colors.blue.shade300, Colors.blue.shade100],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const Gap(10),
+                    Text(
+                      day,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                        color: isToday ? AppTheme.primaryColor : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
             ),
-            const Gap(4),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildVisitTypeItem(String type, int count, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildVisitStatusCard(AnalyticsData data) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const Gap(12),
-        Expanded(child: Text(type)),
-        Text(
-          count.toString(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildStatusRow('Completed', data.completedVisits, data.totalVisits, Colors.green),
+          const Gap(16),
+          _buildStatusRow('Scheduled', data.scheduledVisits, data.totalVisits, Colors.blue),
+          const Gap(16),
+          _buildStatusRow('Cancelled', data.cancelledVisits, data.totalVisits, Colors.red),
+        ],
+      ),
     );
   }
 
-  Widget _buildOutcomeItem(String outcome, int percentage, Color color) {
-    return Row(
+  Widget _buildStatusRow(String label, int count, int total, Color color) {
+    final percentage = total > 0 ? count / total : 0.0;
+
+    return Column(
       children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const Gap(8),
-        Expanded(child: Text(outcome, style: const TextStyle(fontSize: 12))),
-        Text('$percentage%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
-
-  Widget _buildMethodItem(String method, int count, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const Gap(12),
-        Expanded(child: Text(method)),
-        Text(
-          count.toString(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDemographicItem(String ageGroup, int percentage, Color color) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(ageGroup, style: const TextStyle(fontSize: 12)),
-        ),
-        Expanded(
-          flex: 3,
-          child: LinearProgressIndicator(
-            value: percentage / 100,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-        const Gap(8),
-        Text('$percentage%', style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildSatisfactionItem(String level, int percentage, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const Gap(8),
-        Expanded(child: Text(level, style: const TextStyle(fontSize: 12))),
-        Text('$percentage%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
-
-  Widget _buildGoalCard(String title, int current, int target, IconData icon, Color color) {
-    final progress = current / target;
-    final isCompleted = current >= target;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const Gap(12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    color: color,
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                if (isCompleted)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                const Gap(10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '$count (${(percentage * 100).toStringAsFixed(0)}%)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const Gap(8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: percentage,
+            backgroundColor: Colors.grey.shade100,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStatsCard(AnalyticsData data) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildQuickStatRow(
+            Icons.check_circle_rounded,
+            'Completion Rate',
+            '${(data.completionRate * 100).toStringAsFixed(1)}%',
+            Colors.green,
+          ),
+          const Divider(height: 24),
+          _buildQuickStatRow(
+            Icons.how_to_vote_rounded,
+            'Voter Registration',
+            '${(data.voterRegistrationRate * 100).toStringAsFixed(1)}%',
+            Colors.blue,
+          ),
+          const Divider(height: 24),
+          _buildQuickStatRow(
+            Icons.thumb_up_rounded,
+            'Will Vote',
+            data.willVote.toString(),
+            Colors.purple,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStatRow(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const Gap(14),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatPill(String label, int value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const Gap(4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberStatusCard(AnalyticsData data) {
+    final total = data.totalMembers;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Icon(Icons.check, size: 12, color: Colors.green.shade600),
-                        const Gap(4),
+                        SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: CircularProgressIndicator(
+                            value: total > 0 ? data.activeMembers / total : 0,
+                            strokeWidth: 10,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              '${total > 0 ? ((data.activeMembers / total) * 100).toStringAsFixed(0) : 0}%',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              'Active',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Gap(20),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    _buildMiniStatRow('Active Members', data.activeMembers, Colors.green),
+                    const Gap(12),
+                    _buildMiniStatRow('Pending Approval', data.pendingMembers, Colors.orange),
+                    const Gap(12),
+                    _buildMiniStatRow('Total Registered', data.totalMembers, Colors.blue),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStatRow(String label, int value, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const Gap(10),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary),
+          ),
+        ),
+        Text(
+          value.toString(),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSatisfactionCard(AnalyticsData data) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: data.satisfactionDistribution!.map((item) {
+          final color = _getSatisfactionColor(item.memberSatisfaction);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildMiniStatRow(item.memberSatisfaction, item.count, color),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Color _getSatisfactionColor(String satisfaction) {
+    final lower = satisfaction.toLowerCase();
+    if (lower.contains('very satisfied') || lower.contains('excellent')) return Colors.green;
+    if (lower.contains('satisfied') || lower.contains('good')) return Colors.lightGreen;
+    if (lower.contains('neutral') || lower.contains('average')) return Colors.orange;
+    if (lower.contains('dissatisfied') || lower.contains('poor')) return Colors.red;
+    return Colors.grey;
+  }
+
+  Widget _buildVotingStatsCard(AnalyticsData data) {
+    final total = data.totalSupporters;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CircularProgressIndicator(
+                        value: total > 0 ? data.registeredVoters / total : 0,
+                        strokeWidth: 10,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                      ),
+                    ),
+                    Column(
+                      children: [
                         Text(
-                          'Complete',
+                          '${total > 0 ? ((data.registeredVoters / total) * 100).toStringAsFixed(0) : 0}%',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Registered',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.green.shade700,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                       ],
                     ),
-                  ),
-              ],
-            ),
-            const Gap(16),
-            Row(
-              children: [
-                Text(
-                  '$current',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  ' / $target',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const Gap(8),
-            LinearProgressIndicator(
-              value: progress > 1 ? 1 : progress,
-              backgroundColor: Colors.grey.shade300,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTargetItem(String target, String timeframe, IconData icon, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const Gap(12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                target,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  ],
                 ),
               ),
-              Text(
-                timeframe,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
+              const Gap(20),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    _buildMiniStatRow('Registered Voters', data.registeredVoters, Colors.green),
+                    const Gap(12),
+                    _buildMiniStatRow('Will Vote', data.willVote, Colors.blue),
+                    const Gap(12),
+                    _buildMiniStatRow('Special Vote', data.specialVote, Colors.orange),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildVotingStatItem(String label, int count, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildWardDistributionCard(AnalyticsData data) {
+    final sortedWards = data.wardDistribution.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final total = data.totalSupporters;
+    final colors = [Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.red, Colors.teal];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const Gap(8),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 12))),
-        Text(count.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
+        ],
+      ),
+      child: Column(
+        children: sortedWards.asMap().entries.map((entry) {
+          final index = entry.key;
+          final ward = entry.value;
+          final color = colors[index % colors.length];
+          final percentage = total > 0 ? ward.value / total : 0.0;
 
-  Widget _buildStatusItem(String status, int count, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const Gap(12),
-        Expanded(child: Text(status)),
-        Text(
-          count.toString(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWardItem(String ward, int count, Color color) {
-    final total = 287;
-    final percentage = (count / total * 100).toInt();
-
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(ward, style: const TextStyle(fontSize: 12)),
-        ),
-        Expanded(
-          flex: 3,
-          child: LinearProgressIndicator(
-            value: count / total,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-        const Gap(8),
-        Text('$count ($percentage%)', style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildRegistrationTrend(String period, int count, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const Gap(12),
-        Expanded(child: Text(period)),
-        Text(
-          count.toString(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        const Gap(8),
-        Icon(
-          count > 30 ? Icons.trending_up : Icons.trending_flat,
-          size: 16,
-          color: count > 30 ? Colors.green : Colors.orange,
-        ),
-      ],
-    );
-  }
-
-  void _refreshData() {
-    // Simulate data refresh
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Analytics updated for $_selectedPeriod'),
-        duration: const Duration(seconds: 1),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      ward.key,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${ward.value} (${(percentage * 100).toStringAsFixed(0)}%)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+                const Gap(8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage,
+                    backgroundColor: Colors.grey.shade100,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

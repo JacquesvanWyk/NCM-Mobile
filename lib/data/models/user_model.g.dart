@@ -65,10 +65,7 @@ _$MemberModelImpl _$$MemberModelImplFromJson(Map<String, dynamic> json) =>
       telNumber: json['tel_number'] as String?,
       alternativePhone: json['alternative_phone'] as String?,
       address: json['address'] as String?,
-      municipality: json['municipality'] == null
-          ? null
-          : MunicipalityModel.fromJson(
-              json['municipality'] as Map<String, dynamic>),
+      municipality: _municipalityFromJson(json['municipality']),
       town: json['town'] as String?,
       ward: json['ward'] as String?,
       status: json['status'] as String?,
@@ -110,10 +107,10 @@ Map<String, dynamic> _$$MemberModelImplToJson(_$MemberModelImpl instance) =>
 _$LeaderModelImpl _$$LeaderModelImplFromJson(Map<String, dynamic> json) =>
     _$LeaderModelImpl(
       id: (json['id'] as num).toInt(),
-      userId: (json['user_id'] as num).toInt(),
-      municipalityId: (json['municipality_id'] as num).toInt(),
-      name: json['name'] as String,
-      surname: json['surname'] as String,
+      userId: (json['user_id'] as num?)?.toInt() ?? 0,
+      municipalityId: (json['municipality_id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      surname: json['surname'] as String? ?? '',
       picture: json['picture'] as String?,
       idNumber: json['id_number'] as String?,
       nationality: json['nationality'] as String?,
@@ -129,8 +126,8 @@ _$LeaderModelImpl _$$LeaderModelImplFromJson(Map<String, dynamic> json) =>
       criminalActivities: json['criminal_activities'] as String?,
       cv: json['cv'] as String?,
       contribution: json['contribution'] as String?,
-      status: json['status'] as String,
-      level: json['level'] as String,
+      status: json['status'] as String? ?? 'active',
+      level: json['level'] as String? ?? 'Field Worker',
       paid: const BoolConverter().fromJson(json['paid']),
       userSmsId: json['user_sms_id'] as String?,
       assignedMunicipalityId:

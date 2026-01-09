@@ -254,7 +254,7 @@ class _VisitsPageState extends ConsumerState<VisitsPage>
                     ),
                     const Gap(4),
                     Text(
-                      _formatTime(visit.visitDate ?? visit.scheduledDate ?? visit.actualDate ?? DateTime.now()),
+                      _formatVisitTime(visit.visitDate ?? visit.scheduledDate ?? visit.actualDate),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -333,7 +333,7 @@ class _VisitsPageState extends ConsumerState<VisitsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (!isCompleted) ...[
+                if (visit.status == 'scheduled') ...[
                   TextButton.icon(
                     onPressed: () => _startVisit(visit),
                     icon: const Icon(Icons.play_arrow),
@@ -405,6 +405,15 @@ class _VisitsPageState extends ConsumerState<VisitsPage>
 
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatVisitTime(DateTime? dateTime) {
+    if (dateTime == null) return 'No time set';
+    // If time is 00:00, show date instead
+    if (dateTime.hour == 0 && dateTime.minute == 0) {
+      return '${dateTime.day} ${_getMonthName(dateTime.month).substring(0, 3)}';
+    }
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   String _getDayName(int weekday) {

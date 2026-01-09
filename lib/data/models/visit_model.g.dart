@@ -9,11 +9,11 @@ part of 'visit_model.dart';
 _$VisitModelImpl _$$VisitModelImplFromJson(Map<String, dynamic> json) =>
     _$VisitModelImpl(
       id: (json['id'] as num).toInt(),
-      memberId: (json['member_id'] as num).toInt(),
+      memberId: (json['member_id'] as num?)?.toInt() ?? 0,
       fieldWorkerId: (json['field_worker_id'] as num?)?.toInt(),
       leaderId: (json['leader_id'] as num?)?.toInt(),
       municipalityId: (json['municipality_id'] as num?)?.toInt(),
-      visitType: json['visit_type'] as String,
+      visitType: json['visit_type'] as String? ?? 'Door-to-Door',
       scheduledDate: json['scheduled_date'] == null
           ? null
           : DateTime.parse(json['scheduled_date'] as String),
@@ -101,11 +101,11 @@ Map<String, dynamic> _$$VisitModelImplToJson(_$VisitModelImpl instance) =>
 
 _$VisitNoteModelImpl _$$VisitNoteModelImplFromJson(Map<String, dynamic> json) =>
     _$VisitNoteModelImpl(
-      id: (json['id'] as num).toInt(),
-      visitId: (json['visit_id'] as num).toInt(),
-      fieldWorkerId: (json['field_worker_id'] as num).toInt(),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      visitId: (json['visit_id'] as num?)?.toInt() ?? 0,
+      fieldWorkerId: (json['field_worker_id'] as num?)?.toInt() ?? 0,
       noteType: json['note_type'] as String? ?? 'General',
-      content: json['content'] as String,
+      content: json['content'] as String? ?? '',
       isPrivate: json['is_private'] as bool? ?? false,
       attachments: (json['attachments'] as List<dynamic>?)
           ?.map((e) => e as String)

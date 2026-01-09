@@ -434,6 +434,7 @@ mixin _$MemberModel {
   @JsonKey(name: 'alternative_phone')
   String? get alternativePhone => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _municipalityFromJson)
   MunicipalityModel? get municipality => throw _privateConstructorUsedError;
   String? get town => throw _privateConstructorUsedError;
   String? get ward => throw _privateConstructorUsedError;
@@ -473,7 +474,7 @@ abstract class $MemberModelCopyWith<$Res> {
       @JsonKey(name: 'tel_number') String? telNumber,
       @JsonKey(name: 'alternative_phone') String? alternativePhone,
       String? address,
-      MunicipalityModel? municipality,
+      @JsonKey(fromJson: _municipalityFromJson) MunicipalityModel? municipality,
       String? town,
       String? ward,
       String? status,
@@ -655,7 +656,7 @@ abstract class _$$MemberModelImplCopyWith<$Res>
       @JsonKey(name: 'tel_number') String? telNumber,
       @JsonKey(name: 'alternative_phone') String? alternativePhone,
       String? address,
-      MunicipalityModel? municipality,
+      @JsonKey(fromJson: _municipalityFromJson) MunicipalityModel? municipality,
       String? town,
       String? ward,
       String? status,
@@ -819,7 +820,7 @@ class _$MemberModelImpl extends _MemberModel {
       @JsonKey(name: 'tel_number') this.telNumber,
       @JsonKey(name: 'alternative_phone') this.alternativePhone,
       this.address,
-      this.municipality,
+      @JsonKey(fromJson: _municipalityFromJson) this.municipality,
       this.town,
       this.ward,
       this.status,
@@ -874,6 +875,7 @@ class _$MemberModelImpl extends _MemberModel {
   @override
   final String? address;
   @override
+  @JsonKey(fromJson: _municipalityFromJson)
   final MunicipalityModel? municipality;
   @override
   final String? town;
@@ -997,6 +999,7 @@ abstract class _MemberModel extends MemberModel {
           @JsonKey(name: 'tel_number') final String? telNumber,
           @JsonKey(name: 'alternative_phone') final String? alternativePhone,
           final String? address,
+          @JsonKey(fromJson: _municipalityFromJson)
           final MunicipalityModel? municipality,
           final String? town,
           final String? ward,
@@ -1053,6 +1056,7 @@ abstract class _MemberModel extends MemberModel {
   @override
   String? get address;
   @override
+  @JsonKey(fromJson: _municipalityFromJson)
   MunicipalityModel? get municipality;
   @override
   String? get town;
@@ -1498,10 +1502,10 @@ class __$$LeaderModelImplCopyWithImpl<$Res>
 class _$LeaderModelImpl implements _LeaderModel {
   const _$LeaderModelImpl(
       {required this.id,
-      @JsonKey(name: 'user_id') required this.userId,
-      @JsonKey(name: 'municipality_id') required this.municipalityId,
-      required this.name,
-      required this.surname,
+      @JsonKey(name: 'user_id') this.userId = 0,
+      @JsonKey(name: 'municipality_id') this.municipalityId = 0,
+      this.name = '',
+      this.surname = '',
       this.picture,
       @JsonKey(name: 'id_number') this.idNumber,
       this.nationality,
@@ -1516,8 +1520,8 @@ class _$LeaderModelImpl implements _LeaderModel {
       @JsonKey(name: 'criminal_activities') this.criminalActivities,
       this.cv,
       this.contribution,
-      required this.status,
-      required this.level,
+      this.status = 'active',
+      this.level = 'Field Worker',
       @JsonKey(name: 'paid') @BoolConverter() this.paid,
       @JsonKey(name: 'user_sms_id') this.userSmsId,
       @JsonKey(name: 'assigned_municipality_id') this.assignedMunicipalityId,
@@ -1537,8 +1541,10 @@ class _$LeaderModelImpl implements _LeaderModel {
   @JsonKey(name: 'municipality_id')
   final int municipalityId;
   @override
+  @JsonKey()
   final String name;
   @override
+  @JsonKey()
   final String surname;
   @override
   final String? picture;
@@ -1581,8 +1587,10 @@ class _$LeaderModelImpl implements _LeaderModel {
   @override
   final String? contribution;
   @override
+  @JsonKey()
   final String status;
   @override
+  @JsonKey()
   final String level;
   @override
   @JsonKey(name: 'paid')
@@ -1700,10 +1708,10 @@ class _$LeaderModelImpl implements _LeaderModel {
 abstract class _LeaderModel implements LeaderModel {
   const factory _LeaderModel(
       {required final int id,
-      @JsonKey(name: 'user_id') required final int userId,
-      @JsonKey(name: 'municipality_id') required final int municipalityId,
-      required final String name,
-      required final String surname,
+      @JsonKey(name: 'user_id') final int userId,
+      @JsonKey(name: 'municipality_id') final int municipalityId,
+      final String name,
+      final String surname,
       final String? picture,
       @JsonKey(name: 'id_number') final String? idNumber,
       final String? nationality,
@@ -1719,8 +1727,8 @@ abstract class _LeaderModel implements LeaderModel {
       @JsonKey(name: 'criminal_activities') final String? criminalActivities,
       final String? cv,
       final String? contribution,
-      required final String status,
-      required final String level,
+      final String status,
+      final String level,
       @JsonKey(name: 'paid') @BoolConverter() final bool? paid,
       @JsonKey(name: 'user_sms_id') final String? userSmsId,
       @JsonKey(name: 'assigned_municipality_id')

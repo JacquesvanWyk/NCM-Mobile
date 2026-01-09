@@ -56,6 +56,8 @@ class _QuickRegistrationPageState extends ConsumerState<QuickRegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text(
           'Quick Registration',
           style: TextStyle(
@@ -66,7 +68,7 @@ class _QuickRegistrationPageState extends ConsumerState<QuickRegistrationPage> {
         actions: [
           TextButton(
             onPressed: () => _showOfflineHelp(),
-            child: const Text('Offline Mode'),
+            child: const Text('Offline Mode', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

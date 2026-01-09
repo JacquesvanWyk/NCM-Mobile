@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/visit_model.dart';
+import '../../../providers/api_provider.dart';
 
-class VisitDetailsPage extends StatelessWidget {
+class VisitDetailsPage extends ConsumerStatefulWidget {
   final VisitModel visit;
 
   const VisitDetailsPage({
@@ -12,9 +14,47 @@ class VisitDetailsPage extends StatelessWidget {
   });
 
   @override
+  ConsumerState<VisitDetailsPage> createState() => _VisitDetailsPageState();
+}
+
+class _VisitDetailsPageState extends ConsumerState<VisitDetailsPage> {
+  VisitModel? _fullVisit;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVisitDetails();
+  }
+
+  Future<void> _loadVisitDetails() async {
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      final fullVisit = await apiService.getVisit(widget.visit.id);
+      if (mounted) {
+        setState(() {
+          _fullVisit = fullVisit;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _fullVisit = widget.visit; // Fall back to passed visit
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final visit = _fullVisit ?? widget.visit;
+
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text('Visit Details'),
         actions: [
           if (visit.status == 'scheduled')
@@ -28,7 +68,9 @@ class VisitDetailsPage extends StatelessWidget {
             ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,6 +291,101 @@ class VisitDetailsPage extends StatelessWidget {
 
             const Gap(16),
 
+            // Visit Notes
+            if (visit.visitNotes != null && visit.visitNotes!.isNotEmpty)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Visit Notes',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${visit.visitNotes!.length} note${visit.visitNotes!.length > 1 ? 's' : ''}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Gap(12),
+                      ...visit.visitNotes!.map((note) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _getNoteTypeColor(note.noteType).withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _getNoteTypeColor(note.noteType).withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: _getNoteTypeColor(note.noteType),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    note.noteType,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                if (note.isPrivate) ...[
+                                  const Gap(8),
+                                  Icon(Icons.lock, size: 14, color: Colors.grey.shade600),
+                                ],
+                                const Spacer(),
+                                if (note.createdAt != null)
+                                  Text(
+                                    _formatDateTime(note.createdAt!),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const Gap(8),
+                            Text(
+                              note.content,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+
+            const Gap(16),
+
             // Visit Stats (for completed visits)
             if (visit.status == 'completed')
               Card(
@@ -403,4 +540,47 @@ class VisitDetailsPage extends StatelessWidget {
     }
   }
 
+  Color _getNoteTypeColor(String noteType) {
+    switch (noteType.toLowerCase()) {
+      case 'general':
+        return Colors.blue;
+      case 'member feedback':
+        return Colors.green;
+      case 'issue reported':
+        return Colors.orange;
+      case 'service request':
+        return Colors.purple;
+      case 'complaint':
+        return Colors.red;
+      case 'follow-up':
+        return Colors.teal;
+      case 'registration':
+        return Colors.indigo;
+      case 'payment':
+        return Colors.amber.shade700;
+      case 'contact update':
+        return Colors.cyan;
+      case 'address change':
+        return Colors.brown;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
+  }
 }

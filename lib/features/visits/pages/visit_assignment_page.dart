@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/api_service.dart';
 import '../../../data/models/visit_model.dart';
 import '../../../data/models/user_model.dart';
+import '../../../providers/api_provider.dart';
 import '../../../providers/visits_provider.dart';
+import 'quick_add_visit_page.dart';
 
 class VisitAssignmentPage extends ConsumerStatefulWidget {
   const VisitAssignmentPage({super.key});
@@ -40,13 +43,9 @@ class _VisitAssignmentPageState extends ConsumerState<VisitAssignmentPage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text('Visit Assignment'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.assignment_add),
-            onPressed: _showBulkAssignDialog,
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -515,126 +514,206 @@ class _VisitAssignmentPageState extends ConsumerState<VisitAssignmentPage> {
     );
   }
 
-  void _performAssignment(VisitModel visit, LeaderModel leader) {
-    setState(() {
-      // Update visit assignment - this would be done through API in real app
-    });
+  Future<void> _performAssignment(VisitModel visit, LeaderModel leader) async {
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      await apiService.assignVisit(
+        visit.id,
+        AssignVisitRequest(leaderId: leader.id),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Visit assigned to ${leader.name} ${leader.surname}',
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
+      // Refresh visits list
+      ref.invalidate(visitsProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Visit assigned to ${leader.name} ${leader.surname}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to assign visit: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _editVisit(VisitModel visit) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit visit feature coming soon')),
-    );
+    _showEditVisitDialog(visit);
   }
 
-  void _showBulkAssignDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bulk assignment feature coming soon')),
-    );
-  }
+  void _showEditVisitDialog(VisitModel visit) {
+    final addressController = TextEditingController(text: visit.locationAddress ?? '');
+    String selectedVisitType = visit.visitType.isNotEmpty ? visit.visitType : 'Door-to-Door';
+    String selectedPriority = visit.priority.isNotEmpty ? visit.priority : 'medium';
+    DateTime selectedDate = visit.visitDate ?? visit.scheduledDate ?? DateTime.now();
 
-  void _showCreateVisitDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create visit feature coming soon')),
-    );
-  }
+    final visitTypes = ['Door-to-Door', 'Follow-up', 'Community Outreach', 'Home Visit', 'Emergency', 'Scheduled'];
 
-  // Mock data methods
-  List<VisitModel> _getPendingVisits() {
-    return [
-      VisitModel(
-        id: 1,
-        memberId: 1,
-        leaderId: null,
-        municipalityId: 1,
-        visitType: 'Door-to-Door',
-        visitDate: DateTime.now().add(const Duration(hours: 2)),
-        locationAddress: '123 Main Street, Springfield',
-        status: 'scheduled',
-        priority: 'high',
-        member: MemberModel(
-          id: 1,
-          userId: 1,
-          municipalityId: 1,
-          membershipNumber: 'NCM001',
-          idNumber: '8001011234567',
-          name: 'Sarah',
-          surname: 'Johnson',
-          dateOfBirth: '1980-01-01',
-          gender: 'Female',
-          phoneNumber: '0821234567',
-          address: '123 Main Street',
-          town: 'Cape Town',
-          ward: '12',
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Visit'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: visitTypes.contains(selectedVisitType) ? selectedVisitType : visitTypes.first,
+                  decoration: const InputDecoration(
+                    labelText: 'Visit Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: visitTypes.map((type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  )).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedVisitType = value ?? 'Door-to-Door';
+                    });
+                  },
+                ),
+                const Gap(16),
+                TextField(
+                  controller: addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Address',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const Gap(16),
+                DropdownButtonFormField<String>(
+                  value: selectedPriority,
+                  decoration: const InputDecoration(
+                    labelText: 'Priority',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['low', 'medium', 'high'].map((p) => DropdownMenuItem(
+                    value: p,
+                    child: Text(p.substring(0, 1).toUpperCase() + p.substring(1)),
+                  )).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedPriority = value ?? 'medium';
+                    });
+                  },
+                ),
+                const Gap(16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Date'),
+                  subtitle: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() {
+                        selectedDate = picked;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _saveVisitChanges(
+                  visit,
+                  selectedVisitType,
+                  addressController.text,
+                  selectedPriority,
+                  selectedDate,
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
-      VisitModel(
-        id: 2,
-        memberId: 2,
-        leaderId: 2,
-        municipalityId: 1,
-        visitType: 'Follow-up',
-        visitDate: DateTime.now().add(const Duration(hours: 4)),
-        locationAddress: '456 Oak Avenue, Springfield',
-        status: 'scheduled',
-        priority: 'medium',
-        member: MemberModel(
-          id: 2,
-          userId: 2,
-          municipalityId: 1,
-          membershipNumber: 'NCM002',
-          idNumber: '7505155432198',
-          name: 'Michael',
-          surname: 'Brown',
-          dateOfBirth: '1975-05-15',
-          gender: 'Male',
-          phoneNumber: '0837654321',
-          address: '456 Oak Avenue',
-          town: 'Cape Town',
-          ward: '12',
-        ),
-      ),
-    ];
+    );
   }
 
-  List<LeaderModel> _getAvailableLeaders() {
-    return [
-      LeaderModel(
-        id: 1,
-        userId: 3,
-        municipalityId: 1,
-        name: 'Ethan',
-        surname: 'Carter',
-        level: 'Ward Convenor',
-        telNumber: '0821112222',
-        status: 'active',
-        createdAt: DateTime(2020, 1, 1),
-      ),
-      LeaderModel(
-        id: 2,
-        userId: 4,
-        municipalityId: 1,
-        name: 'Jane',
-        surname: 'Smith',
-        level: 'Secretary',
-        telNumber: '0823334444',
-        status: 'active',
-        createdAt: DateTime(2021, 6, 1),
-      ),
-    ];
+  Future<void> _saveVisitChanges(
+    VisitModel visit,
+    String visitType,
+    String address,
+    String priority,
+    DateTime date,
+  ) async {
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      await apiService.updateVisit(
+        visit.id,
+        UpdateVisitRequest(
+          visitType: visitType,
+          locationAddress: address,
+          visitDate: date,
+        ),
+      );
+
+      // Refresh visits list
+      ref.invalidate(visitsProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visit updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update visit: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+
+  void _showCreateVisitDialog() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const QuickAddVisitPage()),
+    );
+    if (result == true) {
+      ref.invalidate(visitsProvider);
+    }
   }
 
   int _getLeaderActiveVisits(int leaderId) {
-    return 3; // Mock data - would be calculated from actual visits
+    final visitsState = ref.read(visitsProvider);
+    final visits = visitsState.valueOrNull ?? [];
+    return visits.where((v) =>
+        v.leaderId == leaderId &&
+        (v.status.toLowerCase() == 'scheduled' || v.status.toLowerCase() == 'in_progress')
+    ).length;
   }
 
   String _formatDateTime(DateTime dateTime) {

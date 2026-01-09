@@ -9,7 +9,9 @@ import '../../../providers/api_provider.dart';
 import 'event_details_page.dart';
 
 class EventsPage extends ConsumerStatefulWidget {
-  const EventsPage({super.key});
+  final VoidCallback? onBackPressed;
+
+  const EventsPage({super.key, this.onBackPressed});
 
   @override
   ConsumerState<EventsPage> createState() => _EventsPageState();
@@ -138,6 +140,18 @@ class _EventsPageState extends ConsumerState<EventsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: (widget.onBackPressed != null || Navigator.canPop(context))
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (widget.onBackPressed != null) {
+                    widget.onBackPressed!();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              )
+            : null,
         title: const Text('Community Events'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,

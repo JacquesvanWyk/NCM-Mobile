@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import '../../data/models/user_model.dart';
@@ -41,25 +42,25 @@ abstract class ApiService {
   Future<ResendCodeResponse> resendVerificationCode(@Body() ResendCodeRequest request);
 
   // Members endpoints
-  @GET('/members')
+  @GET('/api/members')
   Future<PaginatedResponse<MemberModel>> getMembers(
     @Query('page') int page,
     @Query('municipality_id') int? municipalityId,
   );
 
-  @GET('/members/{id}')
+  @GET('/api/members/{id}')
   Future<MemberModel> getMember(@Path('id') int id);
 
-  @POST('/members')
+  @POST('/api/members')
   Future<MemberModel> createMember(@Body() CreateMemberRequest request);
 
-  @PUT('/members/{id}')
+  @PUT('/api/members/{id}')
   Future<MemberModel> updateMember(
     @Path('id') int id,
     @Body() UpdateMemberRequest request,
   );
 
-  @GET('/members/search')
+  @GET('/api/members/search')
   Future<MemberModel> searchMember(@Query('id_number') String idNumber);
 
   @GET('/api/members/search')
@@ -82,17 +83,17 @@ abstract class ApiService {
   );
 
   // Leaders endpoints
-  @GET('/leaders')
+  @GET('/api/leaders')
   Future<PaginatedResponse<LeaderModel>> getLeaders(
     @Query('page') int page,
     @Query('municipality_id') int? municipalityId,
   );
 
-  @GET('/leaders/{id}')
+  @GET('/api/leaders/{id}')
   Future<LeaderModel> getLeader(@Path('id') int id);
 
   // Visits endpoints
-  @GET('/visits')
+  @GET('/api/visits')
   Future<PaginatedResponse<VisitModel>> getVisits(
     @Query('page') int page,
     @Query('leader_id') int? leaderId,
@@ -103,46 +104,46 @@ abstract class ApiService {
     @Query('end_date') String? endDate,
   );
 
-  @POST('/visits')
+  @POST('/api/visits')
   Future<VisitModel> createVisit(@Body() CreateVisitRequest request);
 
-  @GET('/visits/{id}')
+  @GET('/api/visits/{id}')
   Future<VisitModel> getVisit(@Path('id') int id);
 
-  @PUT('/visits/{id}')
+  @PUT('/api/visits/{id}')
   Future<VisitModel> updateVisit(
     @Path('id') int id,
     @Body() UpdateVisitRequest request,
   );
 
-  @PUT('/visits/{id}/assign')
+  @PUT('/api/visits/{id}/assign')
   Future<VisitModel> assignVisit(
     @Path('id') int id,
     @Body() AssignVisitRequest request,
   );
 
-  @POST('/visits/{id}/check-in')
+  @POST('/api/visits/{id}/check-in')
   Future<VisitModel> checkInToVisit(
     @Path('id') int id,
     @Body() CheckInRequest request,
   );
 
-  @POST('/visits/{id}/check-out')
+  @POST('/api/visits/{id}/check-out')
   Future<VisitModel> checkOutFromVisit(
     @Path('id') int id,
     @Body() CheckOutRequest request,
   );
 
-  @DELETE('/visits/{id}')
+  @DELETE('/api/visits/{id}')
   Future<void> deleteVisit(@Path('id') int id);
 
-  @GET('/leaders/{leaderId}/visits')
+  @GET('/api/leaders/{leaderId}/visits')
   Future<PaginatedResponse<VisitModel>> getVisitsByLeader(
     @Path('leaderId') int leaderId,
     @Query('page') int page,
   );
 
-  @GET('/visits/sentiment/stats')
+  @GET('/api/visits/sentiment/stats')
   Future<VisitStatsModel> getSentimentStats(
     @Query('municipality_id') int? municipalityId,
     @Query('leader_id') int? leaderId,
@@ -151,17 +152,17 @@ abstract class ApiService {
   );
 
   // Visit Notes endpoints
-  @GET('/visit-notes')
+  @GET('/api/visit-notes')
   Future<PaginatedResponse<VisitNoteModel>> getVisitNotes(
     @Query('page') int page,
     @Query('visit_id') int? visitId,
   );
 
-  @POST('/visit-notes')
+  @POST('/api/visit-notes')
   Future<VisitNoteModel> createVisitNote(@Body() CreateVisitNoteRequest request);
 
   // Complaints endpoints
-  @GET('/complaints')
+  @GET('/api/complaints')
   Future<PaginatedResponse<ComplaintModel>> getComplaints(
     @Query('page') int page,
     @Query('member_id') int? memberId,
@@ -170,30 +171,30 @@ abstract class ApiService {
     @Query('priority') String? priority,
   );
 
-  @POST('/complaints')
+  @POST('/api/complaints')
   Future<ComplaintModel> createComplaint(@Body() CreateComplaintRequest request);
 
-  @GET('/complaints/{id}')
+  @GET('/api/complaints/{id}')
   Future<ComplaintModel> getComplaint(@Path('id') int id);
 
-  @PUT('/complaints/{id}')
+  @PUT('/api/complaints/{id}')
   Future<ComplaintModel> updateComplaint(
     @Path('id') int id,
     @Body() UpdateComplaintRequest request,
   );
 
   // Complaint Categories endpoints
-  @GET('/complaint-categories')
+  @GET('/api/complaint-categories')
   Future<List<ComplaintCategoryModel>> getComplaintCategories();
 
-  @GET('/complaint-categories/{id}')
+  @GET('/api/complaint-categories/{id}')
   Future<ComplaintCategoryModel> getComplaintCategory(@Path('id') int id);
 
   // Municipalities endpoints
-  @GET('/municipalities')
+  @GET('/api/municipalities')
   Future<List<MunicipalityModel>> getMunicipalities();
 
-  @GET('/municipalities/{id}')
+  @GET('/api/municipalities/{id}')
   Future<MunicipalityModel> getMunicipality(@Path('id') int id);
 
   // QR Code endpoints
@@ -251,6 +252,15 @@ abstract class ApiService {
 
   @GET('/api/supporters/{id}')
   Future<GetSupporterResponse> getSupporter(@Path('id') int id);
+
+  @PUT('/api/supporters/{id}')
+  Future<CreateSupporterResponse> updateSupporter(
+    @Path('id') int id,
+    @Body() CreateSupporterRequest request,
+  );
+
+  @DELETE('/api/supporters/{id}')
+  Future<void> deleteSupporter(@Path('id') int id);
 
   @GET('/api/supporters/stats')
   Future<SupporterStatsResponse> getSupporterStats();
@@ -322,6 +332,16 @@ abstract class ApiService {
   @MultiPart()
   Future<FeedbackResponse> submitFeedback(@Body() FeedbackRequest request);
 
+  // Member Complaint endpoints (for mobile Report Issue feature)
+  @POST('/api/v1/member/complaints')
+  Future<MemberComplaintResponse> submitMemberComplaint(@Body() MemberComplaintRequest request);
+
+  @GET('/api/v1/member/complaints')
+  Future<MemberComplaintsListResponse> getMemberComplaints();
+
+  @GET('/api/v1/member/complaints/{id}')
+  Future<MemberComplaintDetailResponse> getMemberComplaintDetail(@Path('id') int id);
+
   // Payment endpoints (Constitutional requirement: FR-015)
   @POST('/api/v1/payments')
   Future<PaymentResponse> createPayment(@Body() PaymentRequest request);
@@ -336,6 +356,20 @@ abstract class ApiService {
 
   @GET('/api/v1/payments/membership-status')
   Future<MembershipStatusResponse> getMembershipStatus();
+
+  // Profile endpoints (member self-service)
+  @GET('/api/v1/profile')
+  Future<ProfileResponse> getProfile();
+
+  @PUT('/api/v1/profile')
+  Future<ProfileUpdateResponse> updateProfile(@Body() UpdateProfileRequest request);
+
+  @POST('/api/v1/profile/photo')
+  @MultiPart()
+  Future<PhotoUploadResponse> uploadProfilePhoto(@Part(name: 'photo') File photo);
+
+  @DELETE('/api/v1/profile/photo')
+  Future<void> deleteProfilePhoto();
 }
 
 // Request/Response models
@@ -428,19 +462,31 @@ class PaginatedResponse<T> {
     final meta = json['meta'] as Map<String, dynamic>?;
     final hasMeta = meta != null;
 
+    // Handle multiple data key formats: 'data', 'members', 'supporters', 'visits', etc.
+    List dataList = json['data'] as List? ?? [];
+    if (dataList.isEmpty) {
+      // Try alternative keys used by different endpoints
+      dataList = json['members'] as List? ??
+                 json['supporters'] as List? ??
+                 json['visits'] as List? ??
+                 json['leaders'] as List? ?? [];
+    }
+
+    final itemCount = dataList.length;
+
     return PaginatedResponse(
-      data: (json['data'] as List).map((e) => fromJson(e)).toList(),
-      currentPage: hasMeta ? meta['current_page'] : json['current_page'],
-      lastPage: hasMeta ? meta['last_page'] : json['last_page'],
-      total: hasMeta ? meta['total'] : json['total'],
-      perPage: hasMeta ? meta['per_page'] : json['per_page'],
+      data: dataList.map((e) => fromJson(e as Map<String, dynamic>)).toList(),
+      currentPage: hasMeta ? (meta['current_page'] ?? 1) : (json['current_page'] ?? 1),
+      lastPage: hasMeta ? (meta['last_page'] ?? 1) : (json['last_page'] ?? 1),
+      total: hasMeta ? (meta['total'] ?? itemCount) : (json['total'] ?? itemCount),
+      perPage: hasMeta ? (meta['per_page'] ?? 50) : (json['per_page'] ?? 50),
     );
   }
 }
 
 // Request models for creating/updating resources
 class CreateVisitRequest {
-  final int memberId;
+  final int? memberId;
   final int leaderId;
   final int municipalityId;
   final String visitType;
@@ -455,10 +501,11 @@ class CreateVisitRequest {
   final bool followUpRequired;
   final DateTime? followUpDate;
   final String? summary;
+  final String? notes;
   final String status;
 
   CreateVisitRequest({
-    required this.memberId,
+    this.memberId,
     required this.leaderId,
     required this.municipalityId,
     required this.visitType,
@@ -473,27 +520,28 @@ class CreateVisitRequest {
     this.followUpRequired = false,
     this.followUpDate,
     this.summary,
+    this.notes,
     this.status = 'scheduled',
   });
 
-  Map<String, dynamic> toJson() => {
-        'member_id': memberId,
-        'leader_id': leaderId,
-        'municipality_id': municipalityId,
-        'visit_type': visitType,
-        'visit_date': visitDate.toIso8601String(),
-        'duration_minutes': durationMinutes,
-        'location_latitude': locationLatitude,
-        'location_longitude': locationLongitude,
-        'location_address': locationAddress,
-        'sentiment_score': sentimentScore,
-        'member_satisfaction': memberSatisfaction,
-        'issues_identified': issuesIdentified,
-        'follow_up_required': followUpRequired,
-        'follow_up_date': followUpDate?.toIso8601String(),
-        'summary': summary,
-        'status': status,
-      };
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'field_worker_id': leaderId,
+      'municipality_id': municipalityId,
+      'purpose': visitType,
+      'scheduled_date': visitDate.toIso8601String().split('T')[0],
+      'location_address': locationAddress,
+      'priority': status == 'scheduled' ? 'medium' : null,
+      'status': status,
+    };
+    if (memberId != null) {
+      map['member_id'] = memberId;
+    }
+    if (notes != null) {
+      map['notes'] = notes;
+    }
+    return map;
+  }
 }
 
 class UpdateVisitRequest {
@@ -886,8 +934,8 @@ class PollModel {
   final String title;
   final String description;
   final String status;
-  final DateTime startDate;
-  final DateTime endDate;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final List<PollOptionModel> options;
   final bool hasVoted;
 
@@ -896,8 +944,8 @@ class PollModel {
     required this.title,
     required this.description,
     required this.status,
-    required this.startDate,
-    required this.endDate,
+    this.startDate,
+    this.endDate,
     required this.options,
     required this.hasVoted,
   });
@@ -906,11 +954,11 @@ class PollModel {
         id: json['id'],
         title: json['title'] ?? '',
         description: json['description'] ?? '',
-        status: json['status'] ?? 'active',
-        startDate: DateTime.parse(json['startsAt']),
-        endDate: DateTime.parse(json['endsAt']),
+        status: json['status'] ?? (json['is_active'] == true ? 'active' : 'inactive'),
+        startDate: json['starts_at'] != null ? DateTime.parse(json['starts_at']) : null,
+        endDate: json['ends_at'] != null ? DateTime.parse(json['ends_at']) : null,
         options: _parseOptionsFromString(json['options']),
-        hasVoted: json['hasVoted'] ?? false,
+        hasVoted: json['hasVoted'] ?? json['user_has_voted'] ?? false,
       );
 
   static List<PollOptionModel> _parseOptionsFromString(dynamic optionsData) {
@@ -924,13 +972,20 @@ class PollModel {
         optionsJson = optionsData.toString();
       }
 
-      final List<dynamic> optionsList = jsonDecode(optionsJson);
+      // Handle double-encoded JSON (API returns escaped JSON string)
+      dynamic decoded = jsonDecode(optionsJson);
+      // If first decode returns a string, decode again
+      if (decoded is String) {
+        decoded = jsonDecode(decoded);
+      }
+
+      final List<dynamic> optionsList = decoded as List<dynamic>;
       return optionsList.asMap().entries.map((entry) {
         final option = entry.value;
         return PollOptionModel(
-          id: entry.key + 1, // Simple ID based on index
+          id: entry.key + 1,
           text: option['text'] ?? '',
-          voteCount: 0, // Will be filled from poll results if available
+          voteCount: 0,
         );
       }).toList();
     } catch (e) {
@@ -1112,6 +1167,183 @@ class FeedbackResponse {
       );
 }
 
+// Member Complaint models (for mobile Report Issue feature)
+class MemberComplaintRequest {
+  final String category;
+  final String? title;
+  final String description;
+  final String priority;
+  final String? locationAddress;
+  final double? locationLatitude;
+  final double? locationLongitude;
+  final bool isAnonymous;
+  final String? contactMethodPreference;
+
+  MemberComplaintRequest({
+    required this.category,
+    this.title,
+    required this.description,
+    required this.priority,
+    this.locationAddress,
+    this.locationLatitude,
+    this.locationLongitude,
+    this.isAnonymous = false,
+    this.contactMethodPreference,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'category': category,
+        'title': title,
+        'description': description,
+        'priority': priority.toLowerCase(),
+        'location_address': locationAddress,
+        'location_latitude': locationLatitude,
+        'location_longitude': locationLongitude,
+        'is_anonymous': isAnonymous,
+        'contact_method_preference': contactMethodPreference,
+      };
+}
+
+class MemberComplaintResponse {
+  final String message;
+  final MemberComplaintData complaint;
+
+  MemberComplaintResponse({
+    required this.message,
+    required this.complaint,
+  });
+
+  factory MemberComplaintResponse.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintResponse(
+        message: json['message'] ?? '',
+        complaint: MemberComplaintData.fromJson(json['complaint']),
+      );
+}
+
+class MemberComplaintData {
+  final int id;
+  final String reference;
+  final String status;
+  final String createdAt;
+
+  MemberComplaintData({
+    required this.id,
+    required this.reference,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory MemberComplaintData.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintData(
+        id: json['id'],
+        reference: json['reference'] ?? '',
+        status: json['status'] ?? '',
+        createdAt: json['created_at'] ?? '',
+      );
+}
+
+class MemberComplaintsListResponse {
+  final List<MemberComplaintSummary> complaints;
+
+  MemberComplaintsListResponse({required this.complaints});
+
+  factory MemberComplaintsListResponse.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintsListResponse(
+        complaints: (json['complaints'] as List?)
+                ?.map((e) => MemberComplaintSummary.fromJson(e))
+                .toList() ??
+            [],
+      );
+}
+
+class MemberComplaintSummary {
+  final int id;
+  final String reference;
+  final String title;
+  final String? category;
+  final String status;
+  final String priority;
+  final String createdAt;
+  final String? resolvedAt;
+
+  MemberComplaintSummary({
+    required this.id,
+    required this.reference,
+    required this.title,
+    this.category,
+    required this.status,
+    required this.priority,
+    required this.createdAt,
+    this.resolvedAt,
+  });
+
+  factory MemberComplaintSummary.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintSummary(
+        id: json['id'],
+        reference: json['reference'] ?? '',
+        title: json['title'] ?? '',
+        category: json['category'],
+        status: json['status'] ?? '',
+        priority: json['priority'] ?? '',
+        createdAt: json['created_at'] ?? '',
+        resolvedAt: json['resolved_at'],
+      );
+}
+
+class MemberComplaintDetailResponse {
+  final MemberComplaintDetail complaint;
+
+  MemberComplaintDetailResponse({required this.complaint});
+
+  factory MemberComplaintDetailResponse.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintDetailResponse(
+        complaint: MemberComplaintDetail.fromJson(json['complaint']),
+      );
+}
+
+class MemberComplaintDetail {
+  final int id;
+  final String reference;
+  final String title;
+  final String description;
+  final String? category;
+  final String status;
+  final String priority;
+  final String? locationAddress;
+  final String createdAt;
+  final String? resolvedAt;
+  final String? resolutionNotes;
+
+  MemberComplaintDetail({
+    required this.id,
+    required this.reference,
+    required this.title,
+    required this.description,
+    this.category,
+    required this.status,
+    required this.priority,
+    this.locationAddress,
+    required this.createdAt,
+    this.resolvedAt,
+    this.resolutionNotes,
+  });
+
+  factory MemberComplaintDetail.fromJson(Map<String, dynamic> json) =>
+      MemberComplaintDetail(
+        id: json['id'],
+        reference: json['reference'] ?? '',
+        title: json['title'] ?? '',
+        description: json['description'] ?? '',
+        category: json['category'],
+        status: json['status'] ?? '',
+        priority: json['priority'] ?? '',
+        locationAddress: json['location_address'],
+        createdAt: json['created_at'] ?? '',
+        resolvedAt: json['resolved_at'],
+        resolutionNotes: json['resolution_notes'],
+      );
+}
+
 // Payment models (Constitutional requirement: FR-015)
 class PaymentRequest {
   final String amount;
@@ -1267,16 +1499,25 @@ class ActivateMemberAccountRequest {
 // CreateVisitFromMembershipRequest
 class CreateVisitFromMembershipRequest {
   final String membershipNumber;
-  final int leaderId;
+  final String? visitType;
+  final String? purpose;
+  final double? latitude;
+  final double? longitude;
 
   CreateVisitFromMembershipRequest({
     required this.membershipNumber,
-    required this.leaderId,
+    this.visitType,
+    this.purpose,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toJson() => {
         'membership_number': membershipNumber,
-        'leader_id': leaderId,
+        if (visitType != null) 'visit_type': visitType,
+        if (purpose != null) 'purpose': purpose,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
       };
 }
 
@@ -1676,5 +1917,188 @@ class PushNotificationStatsResponse {
     failed: json['failed'] ?? 0,
     totalRecipients: json['total_recipients'] ?? 0,
     successfulDeliveries: json['successful_deliveries'] ?? 0,
+  );
+}
+
+// Profile Models (member self-service)
+class ProfileResponse {
+  final int id;
+  final String? name;
+  final String? surname;
+  final String? email;
+  final String? phone;
+  final String? alternativePhone;
+  final String? idNumber;
+  final String? address;
+  final String? town;
+  final String? ward;
+  final String? dateOfBirth;
+  final String? nationality;
+  final String? gender;
+  final String? membershipNumber;
+  final String? membershipStatus;
+  final String? photoUrl;
+  final DateTime? photoUploadedAt;
+  final Map<String, dynamic>? notificationPreferences;
+  final DateTime? lastActiveAt;
+  final ProfileMunicipality? municipality;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  ProfileResponse({
+    required this.id,
+    this.name,
+    this.surname,
+    this.email,
+    this.phone,
+    this.alternativePhone,
+    this.idNumber,
+    this.address,
+    this.town,
+    this.ward,
+    this.dateOfBirth,
+    this.nationality,
+    this.gender,
+    this.membershipNumber,
+    this.membershipStatus,
+    this.photoUrl,
+    this.photoUploadedAt,
+    this.notificationPreferences,
+    this.lastActiveAt,
+    this.municipality,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory ProfileResponse.fromJson(Map<String, dynamic> json) => ProfileResponse(
+    id: json['id'],
+    name: json['name'],
+    surname: json['surname'],
+    email: json['email'],
+    phone: json['phone'],
+    alternativePhone: json['alternative_phone'],
+    idNumber: json['id_number'],
+    address: json['address'],
+    town: json['town'],
+    ward: json['ward'],
+    dateOfBirth: json['date_of_birth'],
+    nationality: json['nationality'],
+    gender: json['gender'],
+    membershipNumber: json['membership_number'],
+    membershipStatus: json['membership_status'],
+    photoUrl: json['photo_url'],
+    photoUploadedAt: json['photo_uploaded_at'] != null
+        ? DateTime.parse(json['photo_uploaded_at'])
+        : null,
+    notificationPreferences: json['notification_preferences'] as Map<String, dynamic>?,
+    lastActiveAt: json['last_active_at'] != null
+        ? DateTime.parse(json['last_active_at'])
+        : null,
+    municipality: json['municipality'] != null
+        ? ProfileMunicipality.fromJson(json['municipality'])
+        : null,
+    createdAt: json['created_at'] != null
+        ? DateTime.parse(json['created_at'])
+        : null,
+    updatedAt: json['updated_at'] != null
+        ? DateTime.parse(json['updated_at'])
+        : null,
+  );
+}
+
+class ProfileMunicipality {
+  final int id;
+  final String name;
+  final String code;
+
+  ProfileMunicipality({
+    required this.id,
+    required this.name,
+    required this.code,
+  });
+
+  factory ProfileMunicipality.fromJson(Map<String, dynamic> json) => ProfileMunicipality(
+    id: json['id'],
+    name: json['name'] ?? '',
+    code: json['code'] ?? '',
+  );
+}
+
+class UpdateProfileRequest {
+  final String? name;
+  final String? surname;
+  final String? email;
+  final String? phone;
+  final String? alternativePhone;
+  final String? address;
+  final String? town;
+  final String? ward;
+  final String? dateOfBirth;
+  final String? nationality;
+  final String? gender;
+
+  UpdateProfileRequest({
+    this.name,
+    this.surname,
+    this.email,
+    this.phone,
+    this.alternativePhone,
+    this.address,
+    this.town,
+    this.ward,
+    this.dateOfBirth,
+    this.nationality,
+    this.gender,
+  });
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (name != null) map['name'] = name;
+    if (surname != null) map['surname'] = surname;
+    if (email != null) map['email'] = email;
+    if (phone != null) map['phone'] = phone;
+    if (alternativePhone != null) map['alternative_phone'] = alternativePhone;
+    if (address != null) map['address'] = address;
+    if (town != null) map['town'] = town;
+    if (ward != null) map['ward'] = ward;
+    if (dateOfBirth != null) map['date_of_birth'] = dateOfBirth;
+    if (nationality != null) map['nationality'] = nationality;
+    if (gender != null) map['gender'] = gender;
+    return map;
+  }
+}
+
+class ProfileUpdateResponse {
+  final String message;
+  final MemberModel member;
+
+  ProfileUpdateResponse({
+    required this.message,
+    required this.member,
+  });
+
+  factory ProfileUpdateResponse.fromJson(Map<String, dynamic> json) => ProfileUpdateResponse(
+    message: json['message'] ?? '',
+    member: MemberModel.fromJson(json['member']),
+  );
+}
+
+class PhotoUploadResponse {
+  final String message;
+  final String photoUrl;
+  final DateTime? uploadedAt;
+
+  PhotoUploadResponse({
+    required this.message,
+    required this.photoUrl,
+    this.uploadedAt,
+  });
+
+  factory PhotoUploadResponse.fromJson(Map<String, dynamic> json) => PhotoUploadResponse(
+    message: json['message'] ?? '',
+    photoUrl: json['photo_url'] ?? '',
+    uploadedAt: json['uploaded_at'] != null
+        ? DateTime.parse(json['uploaded_at'])
+        : null,
   );
 }

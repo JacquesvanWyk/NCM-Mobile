@@ -10,16 +10,24 @@ _$PollModelImpl _$$PollModelImplFromJson(Map<String, dynamic> json) =>
     _$PollModelImpl(
       id: (json['id'] as num).toInt(),
       title: json['title'] as String,
-      description: json['description'] as String,
-      pollType: json['poll_type'] as String,
+      description: json['description'] as String?,
+      pollType: json['poll_type'] as String?,
       options: json['options'] as String,
       status: json['status'] as String,
-      startsAt: DateTime.parse(json['starts_at'] as String),
-      endsAt: DateTime.parse(json['ends_at'] as String),
-      isPublic: json['is_public'] as bool,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      hasVoted: json['has_voted'] as bool? ?? false,
+      startsAt: json['starts_at'] == null
+          ? null
+          : DateTime.parse(json['starts_at'] as String),
+      endsAt: json['ends_at'] == null
+          ? null
+          : DateTime.parse(json['ends_at'] as String),
+      isPublic: json['is_public'] as bool? ?? true,
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] == null
+          ? null
+          : DateTime.parse(json['updated_at'] as String),
+      hasVoted: _readHasVoted(json, 'has_voted') as bool? ?? false,
       results: json['results'] as List<dynamic>? ?? const [],
       municipality: json['municipality'] as String?,
     );
@@ -32,11 +40,11 @@ Map<String, dynamic> _$$PollModelImplToJson(_$PollModelImpl instance) =>
       'poll_type': instance.pollType,
       'options': instance.options,
       'status': instance.status,
-      'starts_at': instance.startsAt.toIso8601String(),
-      'ends_at': instance.endsAt.toIso8601String(),
+      'starts_at': instance.startsAt?.toIso8601String(),
+      'ends_at': instance.endsAt?.toIso8601String(),
       'is_public': instance.isPublic,
-      'created_at': instance.createdAt.toIso8601String(),
-      'updated_at': instance.updatedAt.toIso8601String(),
+      'created_at': instance.createdAt?.toIso8601String(),
+      'updated_at': instance.updatedAt?.toIso8601String(),
       'has_voted': instance.hasVoted,
       'results': instance.results,
       'municipality': instance.municipality,

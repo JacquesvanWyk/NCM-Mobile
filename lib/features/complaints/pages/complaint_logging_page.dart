@@ -1,18 +1,18 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
+import '../../../providers/api_provider.dart';
 
 class ComplaintLoggingPage extends ConsumerStatefulWidget {
   final String? membershipNumber;
+  final VoidCallback? onBackPressed;
 
   const ComplaintLoggingPage({
     super.key,
     this.membershipNumber,
+    this.onBackPressed,
   });
 
   @override
@@ -39,9 +39,6 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
   bool _allowCallback = true;
   bool _isSubmitting = false;
 
-  List<File> _photos = [];
-  List<File> _documents = [];
-
   final List<Map<String, dynamic>> _categories = [
     {'value': 'Water Services', 'icon': Icons.water_drop, 'color': Colors.blue},
     {'value': 'Electricity', 'icon': Icons.electrical_services, 'color': Colors.orange},
@@ -59,12 +56,6 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
   final List<String> _impacts = ['Individual', 'Household', 'Community', 'Ward'];
 
   @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation();
-  }
-
-  @override
   void dispose() {
     _complainantNameController.dispose();
     _complainantPhoneController.dispose();
@@ -73,44 +64,6 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
     _locationController.dispose();
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _getCurrentLocation() async {
-    // TODO: Implement GPS location capture
-    _locationController.text = 'Current location (GPS coordinates will be captured)';
-  }
-
-  Future<void> _takePicture() async {
-    final permission = await Permission.camera.request();
-    if (!permission.isGranted) {
-      _showSnackBar('Camera permission required', Colors.red);
-      return;
-    }
-
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1080,
-      imageQuality: 85,
-    );
-
-    if (pickedFile != null) {
-      setState(() {
-        _photos.add(File(pickedFile.path));
-      });
-    }
-  }
-
-  Future<void> _pickDocument() async {
-    // TODO: Implement document picker
-    _showSnackBar('Document picker coming soon', Colors.blue);
-  }
-
-  void _removePhoto(int index) {
-    setState(() {
-      _photos.removeAt(index);
-    });
   }
 
   void _nextStep() {
@@ -134,38 +87,56 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
   }
 
   Future<void> _submitComplaint() async {
-    if (!_formKey.currentState!.validate()) {
+    // Validate required fields manually since Form is on a different page
+    if (_descriptionController.text.trim().isEmpty) {
+      _showSnackBar('Please provide a description', Colors.red);
+      return;
+    }
+    if (_descriptionController.text.trim().length < 20) {
+      _showSnackBar('Description must be at least 20 characters', Colors.red);
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      // TODO: Submit to actual API
-      // Create complaint request
-      final complaintData = {
-        'category': _selectedCategory,
-        'priority': _selectedPriority,
-        'impact': _selectedImpact,
-        'description': _descriptionController.text.trim(),
-        'location': _locationController.text.trim(),
-        'is_anonymous': _isAnonymous,
-        'allow_callback': _allowCallback,
-        'complainant_name': _isAnonymous ? null : _complainantNameController.text.trim(),
-        'complainant_phone': _isAnonymous ? null : _complainantPhoneController.text.trim(),
-        'complainant_address': _isAnonymous ? null : _complainantAddressController.text.trim(),
-        'membership_number': widget.membershipNumber,
-        'photos': _photos.map((photo) => photo.path).toList(),
-        'documents': _documents.map((doc) => doc.path).toList(),
-      };
+      final apiService = ref.read(apiServiceProvider);
 
-      // Mock API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Map priority from UI to API format
+      String apiPriority;
+      switch (_selectedPriority.toLowerCase()) {
+        case 'low':
+          apiPriority = 'low';
+          break;
+        case 'medium':
+          apiPriority = 'medium';
+          break;
+        case 'high':
+          apiPriority = 'high';
+          break;
+        case 'critical':
+          apiPriority = 'urgent';
+          break;
+        default:
+          apiPriority = 'medium';
+      }
+
+      final request = MemberComplaintRequest(
+        category: _selectedCategory,
+        title: _selectedCategory,
+        description: _descriptionController.text.trim(),
+        priority: apiPriority,
+        locationAddress: _locationController.text.trim(),
+        isAnonymous: _isAnonymous,
+        contactMethodPreference: _allowCallback ? 'phone' : null,
+      );
+
+      final response = await apiService.submitMemberComplaint(request);
 
       setState(() => _isSubmitting = false);
 
       if (mounted) {
-        // Show success dialog
+        // Show success dialog with actual reference number
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -175,12 +146,12 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
               color: Colors.green,
               size: 64,
             ),
-            title: const Text('Complaint Logged Successfully!'),
+            title: const Text('Issue Reported Successfully!'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Your complaint has been recorded and will be forwarded to the appropriate department.',
+                  'Your issue has been recorded and will be forwarded to the appropriate department.',
                   textAlign: TextAlign.center,
                 ),
                 const Gap(16),
@@ -201,7 +172,7 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                       ),
                       const Gap(4),
                       Text(
-                        'CMP${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+                        response.complaint.reference,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -216,8 +187,14 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop(true); // Return to previous screen
+                  Navigator.of(context).pop(); // Close dialog
+                  // Check if we can pop the page (came from navigation)
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(true);
+                  } else {
+                    // Reset the form for a new submission
+                    _resetForm();
+                  }
                 },
                 child: const Text('Done'),
               ),
@@ -227,7 +204,7 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
       }
     } catch (error) {
       setState(() => _isSubmitting = false);
-      _showSnackBar('Failed to submit complaint: $error', Colors.red);
+      _showSnackBar('Failed to submit issue: $error', Colors.red);
     }
   }
 
@@ -240,10 +217,39 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
     );
   }
 
+  void _resetForm() {
+    setState(() {
+      _currentStep = 0;
+      _selectedCategory = 'Water Services';
+      _selectedPriority = 'Medium';
+      _selectedImpact = 'Individual';
+      _isAnonymous = false;
+      _allowCallback = true;
+    });
+    _complainantNameController.clear();
+    _complainantPhoneController.clear();
+    _complainantAddressController.clear();
+    _descriptionController.clear();
+    _locationController.clear();
+    _pageController.jumpToPage(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: (widget.onBackPressed != null || Navigator.canPop(context))
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (widget.onBackPressed != null) {
+                    widget.onBackPressed!();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              )
+            : null,
         title: const Text('Report Issue'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -442,15 +448,17 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _selectedPriority,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Priority Level',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.priority_high),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             ),
                             items: _priorities.map((priority) {
                               return DropdownMenuItem(
                                 value: priority,
-                                child: Text(priority),
+                                child: Text(priority, overflow: TextOverflow.ellipsis),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -458,19 +466,21 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                             },
                           ),
                         ),
-                        const Gap(16),
+                        const Gap(12),
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _selectedImpact,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Impact Level',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.groups),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             ),
                             items: _impacts.map((impact) {
                               return DropdownMenuItem(
                                 value: impact,
-                                child: Text(impact),
+                                child: Text(impact, overflow: TextOverflow.ellipsis),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -505,7 +515,7 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                       controller: _locationController,
                       decoration: const InputDecoration(
                         labelText: 'Location',
-                        hintText: 'Where is this issue located?',
+                        hintText: 'Address of issue',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.location_on),
                       ),
@@ -516,90 +526,6 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                         return null;
                       },
                     ),
-                    const Gap(24),
-                    // Evidence section
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _takePicture,
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('Take Photo'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                            ),
-                          ),
-                        ),
-                        const Gap(16),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickDocument,
-                            icon: const Icon(Icons.attach_file),
-                            label: const Text('Add Document'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(16),
-                    if (_photos.isNotEmpty) ...[
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Photos:',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const Gap(8),
-                      SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _photos.length,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              width: 80,
-                              margin: const EdgeInsets.only(right: 8),
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      _photos[index],
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () => _removePhoto(index),
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -780,12 +706,6 @@ class _ComplaintLoggingPageState extends ConsumerState<ComplaintLoggingPage> {
                           icon: Icons.phone,
                         ),
                       ],
-                      const Gap(16),
-                      _ReviewItem(
-                        label: 'Photos',
-                        value: '${_photos.length} photo${_photos.length == 1 ? '' : 's'} attached',
-                        icon: Icons.photo,
-                      ),
                       const Gap(16),
                       _ReviewItem(
                         label: 'Contact Preference',

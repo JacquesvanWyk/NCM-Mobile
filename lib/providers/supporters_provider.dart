@@ -88,6 +88,67 @@ class SupportersNotifier extends StateNotifier<AsyncValue<List<SupporterModel>>>
     }
   }
 
+  Future<SupporterModel> updateSupporter({
+    required int id,
+    required String name,
+    required String surname,
+    required String telephone,
+    required String ward,
+    String? email,
+    String? address,
+    String? registeredVoter,
+    String? voter,
+    String? specialVote,
+    String? picture,
+  }) async {
+    try {
+      final request = CreateSupporterRequest(
+        name: name,
+        surname: surname,
+        email: email,
+        telephone: telephone,
+        address: address,
+        ward: ward,
+        registeredVoter: registeredVoter == 'yes',
+        voter: voter,
+        specialVote: specialVote,
+        picture: picture,
+      );
+
+      final response = await _apiService.updateSupporter(id, request);
+      final updatedSupporter = response.supporter;
+
+      // Update in state
+      state.whenData((supporters) {
+        final index = supporters.indexWhere((s) => s.id == id);
+        if (index != -1) {
+          final updated = List<SupporterModel>.from(supporters);
+          updated[index] = updatedSupporter;
+          state = AsyncValue.data(updated);
+        }
+      });
+
+      return updatedSupporter;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteSupporter(int id) async {
+    try {
+      await _apiService.deleteSupporter(id);
+
+      // Remove from state
+      state.whenData((supporters) {
+        state = AsyncValue.data(
+          supporters.where((s) => s.id != id).toList(),
+        );
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Helper methods to filter supporters
   List<SupporterModel> searchSupporters(String query) {
     return state.whenData((supporters) {

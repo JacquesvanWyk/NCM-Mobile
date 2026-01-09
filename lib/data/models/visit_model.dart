@@ -8,11 +8,11 @@ part 'visit_model.g.dart';
 class VisitModel with _$VisitModel {
   const factory VisitModel({
     required int id,
-    @JsonKey(name: 'member_id') required int memberId,
+    @JsonKey(name: 'member_id') @Default(0) int memberId,
     @JsonKey(name: 'field_worker_id') int? fieldWorkerId,
     @JsonKey(name: 'leader_id') int? leaderId,
     @JsonKey(name: 'municipality_id') int? municipalityId,
-    @JsonKey(name: 'visit_type') required String visitType,
+    @JsonKey(name: 'visit_type') @Default('Door-to-Door') String visitType,
     @JsonKey(name: 'scheduled_date') DateTime? scheduledDate,
     @JsonKey(name: 'actual_date') DateTime? actualDate,
     @JsonKey(name: 'visit_date') DateTime? visitDate,
@@ -49,11 +49,11 @@ class VisitModel with _$VisitModel {
 @freezed
 class VisitNoteModel with _$VisitNoteModel {
   const factory VisitNoteModel({
-    required int id,
-    @JsonKey(name: 'visit_id') required int visitId,
-    @JsonKey(name: 'field_worker_id') required int fieldWorkerId,
+    @Default(0) int id,
+    @JsonKey(name: 'visit_id') @Default(0) int visitId,
+    @JsonKey(name: 'field_worker_id') @Default(0) int fieldWorkerId,
     @JsonKey(name: 'note_type') @Default('General') String noteType,
-    required String content,
+    @Default('') String content,
     @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
     List<String>? attachments,
     @JsonKey(name: 'created_at') DateTime? createdAt,

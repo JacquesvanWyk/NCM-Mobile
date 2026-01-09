@@ -64,6 +64,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final member = authState.valueOrNull?.member;
+    final userName = member?.displayFullName ?? 'Member';
+    final municipality = member?.municipality?.name ?? 'NCM';
+    final ward = member?.ward ?? '';
+    final locationText = ward.isNotEmpty ? '$municipality • Ward $ward' : municipality;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -151,7 +158,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   const Gap(4),
                   Text(
-                    'John Doe', // TODO: Get from user data
+                    userName,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,
@@ -159,7 +166,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   const Gap(8),
                   Text(
-                    'City of Cape Town • Ward 4', // TODO: Get from user data
+                    locationText,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontSize: 14,

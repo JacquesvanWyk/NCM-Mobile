@@ -22,23 +22,23 @@ PollModel _$PollModelFromJson(Map<String, dynamic> json) {
 mixin _$PollModel {
   int get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'poll_type')
-  String get pollType => throw _privateConstructorUsedError;
+  String? get pollType => throw _privateConstructorUsedError;
   String get options =>
       throw _privateConstructorUsedError; // JSON string from API Platform
   String get status => throw _privateConstructorUsedError;
   @JsonKey(name: 'starts_at')
-  DateTime get startsAt => throw _privateConstructorUsedError;
+  DateTime? get startsAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'ends_at')
-  DateTime get endsAt => throw _privateConstructorUsedError;
+  DateTime? get endsAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_public')
   bool get isPublic => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
-  DateTime get updatedAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'has_voted')
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'has_voted', readValue: _readHasVoted)
   bool get hasVoted => throw _privateConstructorUsedError;
   List<dynamic> get results => throw _privateConstructorUsedError;
   String? get municipality => throw _privateConstructorUsedError;
@@ -57,16 +57,16 @@ abstract class $PollModelCopyWith<$Res> {
   $Res call(
       {int id,
       String title,
-      String description,
-      @JsonKey(name: 'poll_type') String pollType,
+      String? description,
+      @JsonKey(name: 'poll_type') String? pollType,
       String options,
       String status,
-      @JsonKey(name: 'starts_at') DateTime startsAt,
-      @JsonKey(name: 'ends_at') DateTime endsAt,
+      @JsonKey(name: 'starts_at') DateTime? startsAt,
+      @JsonKey(name: 'ends_at') DateTime? endsAt,
       @JsonKey(name: 'is_public') bool isPublic,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'updated_at') DateTime updatedAt,
-      @JsonKey(name: 'has_voted') bool hasVoted,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @JsonKey(name: 'has_voted', readValue: _readHasVoted) bool hasVoted,
       List<dynamic> results,
       String? municipality});
 }
@@ -86,15 +86,15 @@ class _$PollModelCopyWithImpl<$Res, $Val extends PollModel>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? description = null,
-    Object? pollType = null,
+    Object? description = freezed,
+    Object? pollType = freezed,
     Object? options = null,
     Object? status = null,
-    Object? startsAt = null,
-    Object? endsAt = null,
+    Object? startsAt = freezed,
+    Object? endsAt = freezed,
     Object? isPublic = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
     Object? hasVoted = null,
     Object? results = null,
     Object? municipality = freezed,
@@ -108,14 +108,14 @@ class _$PollModelCopyWithImpl<$Res, $Val extends PollModel>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      description: null == description
+      description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
-              as String,
-      pollType: null == pollType
+              as String?,
+      pollType: freezed == pollType
           ? _value.pollType
           : pollType // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       options: null == options
           ? _value.options
           : options // ignore: cast_nullable_to_non_nullable
@@ -124,26 +124,26 @@ class _$PollModelCopyWithImpl<$Res, $Val extends PollModel>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      startsAt: null == startsAt
+      startsAt: freezed == startsAt
           ? _value.startsAt
           : startsAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endsAt: null == endsAt
+              as DateTime?,
+      endsAt: freezed == endsAt
           ? _value.endsAt
           : endsAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
               as bool,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
       hasVoted: null == hasVoted
           ? _value.hasVoted
           : hasVoted // ignore: cast_nullable_to_non_nullable
@@ -171,16 +171,16 @@ abstract class _$$PollModelImplCopyWith<$Res>
   $Res call(
       {int id,
       String title,
-      String description,
-      @JsonKey(name: 'poll_type') String pollType,
+      String? description,
+      @JsonKey(name: 'poll_type') String? pollType,
       String options,
       String status,
-      @JsonKey(name: 'starts_at') DateTime startsAt,
-      @JsonKey(name: 'ends_at') DateTime endsAt,
+      @JsonKey(name: 'starts_at') DateTime? startsAt,
+      @JsonKey(name: 'ends_at') DateTime? endsAt,
       @JsonKey(name: 'is_public') bool isPublic,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'updated_at') DateTime updatedAt,
-      @JsonKey(name: 'has_voted') bool hasVoted,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @JsonKey(name: 'has_voted', readValue: _readHasVoted) bool hasVoted,
       List<dynamic> results,
       String? municipality});
 }
@@ -198,15 +198,15 @@ class __$$PollModelImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? description = null,
-    Object? pollType = null,
+    Object? description = freezed,
+    Object? pollType = freezed,
     Object? options = null,
     Object? status = null,
-    Object? startsAt = null,
-    Object? endsAt = null,
+    Object? startsAt = freezed,
+    Object? endsAt = freezed,
     Object? isPublic = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
     Object? hasVoted = null,
     Object? results = null,
     Object? municipality = freezed,
@@ -220,14 +220,14 @@ class __$$PollModelImplCopyWithImpl<$Res>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      description: null == description
+      description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
-              as String,
-      pollType: null == pollType
+              as String?,
+      pollType: freezed == pollType
           ? _value.pollType
           : pollType // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       options: null == options
           ? _value.options
           : options // ignore: cast_nullable_to_non_nullable
@@ -236,26 +236,26 @@ class __$$PollModelImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      startsAt: null == startsAt
+      startsAt: freezed == startsAt
           ? _value.startsAt
           : startsAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endsAt: null == endsAt
+              as DateTime?,
+      endsAt: freezed == endsAt
           ? _value.endsAt
           : endsAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
       isPublic: null == isPublic
           ? _value.isPublic
           : isPublic // ignore: cast_nullable_to_non_nullable
               as bool,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
       hasVoted: null == hasVoted
           ? _value.hasVoted
           : hasVoted // ignore: cast_nullable_to_non_nullable
@@ -278,16 +278,17 @@ class _$PollModelImpl implements _PollModel {
   const _$PollModelImpl(
       {required this.id,
       required this.title,
-      required this.description,
-      @JsonKey(name: 'poll_type') required this.pollType,
+      this.description,
+      @JsonKey(name: 'poll_type') this.pollType,
       required this.options,
       required this.status,
-      @JsonKey(name: 'starts_at') required this.startsAt,
-      @JsonKey(name: 'ends_at') required this.endsAt,
-      @JsonKey(name: 'is_public') required this.isPublic,
-      @JsonKey(name: 'created_at') required this.createdAt,
-      @JsonKey(name: 'updated_at') required this.updatedAt,
-      @JsonKey(name: 'has_voted') this.hasVoted = false,
+      @JsonKey(name: 'starts_at') this.startsAt,
+      @JsonKey(name: 'ends_at') this.endsAt,
+      @JsonKey(name: 'is_public') this.isPublic = true,
+      @JsonKey(name: 'created_at') this.createdAt,
+      @JsonKey(name: 'updated_at') this.updatedAt,
+      @JsonKey(name: 'has_voted', readValue: _readHasVoted)
+      this.hasVoted = false,
       final List<dynamic> results = const [],
       this.municipality})
       : _results = results;
@@ -300,10 +301,10 @@ class _$PollModelImpl implements _PollModel {
   @override
   final String title;
   @override
-  final String description;
+  final String? description;
   @override
   @JsonKey(name: 'poll_type')
-  final String pollType;
+  final String? pollType;
   @override
   final String options;
 // JSON string from API Platform
@@ -311,21 +312,21 @@ class _$PollModelImpl implements _PollModel {
   final String status;
   @override
   @JsonKey(name: 'starts_at')
-  final DateTime startsAt;
+  final DateTime? startsAt;
   @override
   @JsonKey(name: 'ends_at')
-  final DateTime endsAt;
+  final DateTime? endsAt;
   @override
   @JsonKey(name: 'is_public')
   final bool isPublic;
   @override
   @JsonKey(name: 'created_at')
-  final DateTime createdAt;
+  final DateTime? createdAt;
   @override
   @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
   @override
-  @JsonKey(name: 'has_voted')
+  @JsonKey(name: 'has_voted', readValue: _readHasVoted)
   final bool hasVoted;
   final List<dynamic> _results;
   @override
@@ -410,16 +411,16 @@ abstract class _PollModel implements PollModel {
   const factory _PollModel(
       {required final int id,
       required final String title,
-      required final String description,
-      @JsonKey(name: 'poll_type') required final String pollType,
+      final String? description,
+      @JsonKey(name: 'poll_type') final String? pollType,
       required final String options,
       required final String status,
-      @JsonKey(name: 'starts_at') required final DateTime startsAt,
-      @JsonKey(name: 'ends_at') required final DateTime endsAt,
-      @JsonKey(name: 'is_public') required final bool isPublic,
-      @JsonKey(name: 'created_at') required final DateTime createdAt,
-      @JsonKey(name: 'updated_at') required final DateTime updatedAt,
-      @JsonKey(name: 'has_voted') final bool hasVoted,
+      @JsonKey(name: 'starts_at') final DateTime? startsAt,
+      @JsonKey(name: 'ends_at') final DateTime? endsAt,
+      @JsonKey(name: 'is_public') final bool isPublic,
+      @JsonKey(name: 'created_at') final DateTime? createdAt,
+      @JsonKey(name: 'updated_at') final DateTime? updatedAt,
+      @JsonKey(name: 'has_voted', readValue: _readHasVoted) final bool hasVoted,
       final List<dynamic> results,
       final String? municipality}) = _$PollModelImpl;
 
@@ -431,31 +432,31 @@ abstract class _PollModel implements PollModel {
   @override
   String get title;
   @override
-  String get description;
+  String? get description;
   @override
   @JsonKey(name: 'poll_type')
-  String get pollType;
+  String? get pollType;
   @override
   String get options;
   @override // JSON string from API Platform
   String get status;
   @override
   @JsonKey(name: 'starts_at')
-  DateTime get startsAt;
+  DateTime? get startsAt;
   @override
   @JsonKey(name: 'ends_at')
-  DateTime get endsAt;
+  DateTime? get endsAt;
   @override
   @JsonKey(name: 'is_public')
   bool get isPublic;
   @override
   @JsonKey(name: 'created_at')
-  DateTime get createdAt;
+  DateTime? get createdAt;
   @override
   @JsonKey(name: 'updated_at')
-  DateTime get updatedAt;
+  DateTime? get updatedAt;
   @override
-  @JsonKey(name: 'has_voted')
+  @JsonKey(name: 'has_voted', readValue: _readHasVoted)
   bool get hasVoted;
   @override
   List<dynamic> get results;

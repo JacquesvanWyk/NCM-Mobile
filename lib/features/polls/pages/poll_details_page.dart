@@ -545,7 +545,9 @@ class _PollDetailsPageState extends ConsumerState<PollDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final daysRemaining = widget.pollData.endsAt.difference(DateTime.now()).inDays;
+    final hasEndDate = widget.pollData.endsAt != null;
+    final daysRemaining = hasEndDate ? widget.pollData.endsAt!.difference(DateTime.now()).inDays : null;
+    final isActive = !hasEndDate || (daysRemaining != null && daysRemaining >= 0);
 
     return Scaffold(
       appBar: AppBar(
@@ -612,9 +614,13 @@ class _PollDetailsPageState extends ConsumerState<PollDetailsPage> {
                       ),
                       const Gap(8),
                       Text(
-                        '$daysRemaining days remaining',
+                        !hasEndDate
+                            ? 'Ongoing'
+                            : (daysRemaining! >= 0
+                                ? '$daysRemaining days remaining'
+                                : 'Poll ended'),
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: isActive ? AppTheme.textSecondary : Colors.red,
                           fontSize: 12,
                         ),
                       ),
@@ -647,7 +653,7 @@ class _PollDetailsPageState extends ConsumerState<PollDetailsPage> {
                   ),
                   const Gap(8),
                   Text(
-                    widget.pollData.description,
+                    widget.pollData.description ?? '',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -684,7 +690,7 @@ class _PollDetailsPageState extends ConsumerState<PollDetailsPage> {
             const Gap(24),
 
             // Vote button
-            if (!_hasVoted && daysRemaining > 0)
+            if (!_hasVoted && isActive)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

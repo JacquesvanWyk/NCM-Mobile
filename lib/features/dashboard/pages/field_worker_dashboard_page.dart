@@ -19,6 +19,9 @@ import '../../../data/models/visit_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/dashboard_mode_provider.dart';
+import '../../../providers/visits_provider.dart';
+import '../../../providers/members_provider.dart';
+import '../../../providers/supporters_provider.dart';
 
 class FieldWorkerDashboardPage extends ConsumerStatefulWidget {
   const FieldWorkerDashboardPage({super.key});
@@ -31,18 +34,20 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
   int _selectedIndex = 0;
 
   Future<void> _handleLogout() async {
-    // Navigate to login FIRST before clearing state
-    // This prevents the dashboard from switching to member mode
+    // Clear auth and reset dashboard mode BEFORE navigating
+    final authNotifier = ref.read(authProvider.notifier);
+    final dashboardNotifier = ref.read(dashboardModeProvider.notifier);
+
+    await authNotifier.logout();
+    await dashboardNotifier.reset();
+
+    // Then navigate to login
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginPage()),
         (route) => false,
       );
     }
-
-    // Then clear auth and reset dashboard mode
-    await ref.read(authProvider.notifier).logout();
-    await ref.read(dashboardModeProvider.notifier).reset();
   }
 
   @override
@@ -64,6 +69,44 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
   }
 
   Widget _buildHomeTab() {
+    final visitsState = ref.watch(visitsProvider);
+    final membersState = ref.watch(membersProvider);
+    final supportersState = ref.watch(supportersProvider);
+
+    // Calculate stats from providers
+    final visits = visitsState.valueOrNull ?? [];
+    final members = membersState.valueOrNull ?? [];
+    final supporters = supportersState.valueOrNull ?? [];
+
+    // Today's date for filtering
+    final today = DateTime.now();
+
+    // Today's visits
+    final todaysVisits = visits.where((v) {
+      final visitDate = v.visitDate ?? v.scheduledDate ?? v.actualDate;
+      if (visitDate == null) return false;
+      return visitDate.year == today.year && visitDate.month == today.month && visitDate.day == today.day;
+    }).toList();
+
+    final plannedToday = todaysVisits.where((v) => v.status.toLowerCase() == 'scheduled').length;
+    final completedToday = todaysVisits.where((v) => v.status.toLowerCase() == 'completed').length;
+
+    // This month stats
+    final thisMonthStart = DateTime(today.year, today.month, 1);
+
+    final totalRegistrationsThisMonth = members.where((m) {
+      final createdAt = m.createdAt;
+      if (createdAt == null) return false;
+      return createdAt.isAfter(thisMonthStart.subtract(const Duration(days: 1)));
+    }).length + supporters.where((s) {
+      final createdAt = s.createdAt;
+      if (createdAt == null) return false;
+      return createdAt.isAfter(thisMonthStart.subtract(const Duration(days: 1)));
+    }).length;
+
+    // Weekly progress (4 weeks of data)
+    final weeklyProgress = _calculateWeeklyProgress(visits, members, supporters);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
@@ -95,144 +138,205 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Section with Role-based Information
+            // Profile Section - Clean modern design
             FutureBuilder<String?>(
-              future: AuthService.getUserType(),
-              builder: (context, userTypeSnapshot) {
-                return FutureBuilder<String?>(
-                  future: AuthService.getLeaderLevel(),
-                  builder: (context, leaderLevelSnapshot) {
-                    final userType = userTypeSnapshot.data ?? 'Unknown';
-                    final leaderLevel = leaderLevelSnapshot.data ?? 'Unknown';
+              future: AuthService.getLeaderLevel(),
+              builder: (context, leaderLevelSnapshot) {
+                final leaderLevel = leaderLevelSnapshot.data ?? 'Leader';
 
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: Colors.blue.shade100,
-                                child: const Icon(
-                                  Icons.admin_panel_settings,
-                                  size: 28,
-                                  color: Colors.blue,
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryColor.withOpacity(0.1),
+                        AppTheme.primaryColor.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      FutureBuilder<UserModel?>(
+                        future: AuthService.getUser(),
+                        builder: (context, snapshot) {
+                          final user = snapshot.data;
+                          final leader = user?.leader;
+                          final initials = leader != null
+                              ? '${leader.name.isNotEmpty ? leader.name[0] : ''}${leader.surname.isNotEmpty ? leader.surname[0] : ''}'.toUpperCase()
+                              : 'U';
+
+                          return Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                              const Gap(12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    FutureBuilder<String>(
-                                      future: AuthService.getUser().then((user) {
-                                        // For leaders, show leader name; for regular users, show user name
-                                        return user?.leader?.name ?? user?.name ?? 'Unknown User';
-                                      }),
-                                      builder: (context, snapshot) {
-                                        return Text(
-                                          snapshot.data ?? 'Loading...',
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.textPrimary,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    Text(
-                                      'Leader Level: $leaderLevel',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.blue.shade700,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Role: ${userType.replaceAll('_', ' ').toUpperCase()}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textSecondary,
-                                      ),
-                                    ),
-                                  ],
+                            ),
+                          );
+                        },
+                      ),
+                      const Gap(16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FutureBuilder<String>(
+                              future: AuthService.getUser().then((user) {
+                                final leader = user?.leader;
+                                if (leader != null && (leader.name.isNotEmpty || leader.surname.isNotEmpty)) {
+                                  return '${leader.name} ${leader.surname}'.trim();
+                                }
+                                return user?.name ?? 'Welcome';
+                              }),
+                              builder: (context, snapshot) {
+                                return Text(
+                                  snapshot.data ?? 'Loading...',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.textPrimary,
+                                    letterSpacing: -0.5,
+                                  ),
+                                );
+                              },
+                            ),
+                            const Gap(4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getRoleBadgeColor(leaderLevel),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                leaderLevel,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getRoleBadgeTextColor(leaderLevel),
                                 ),
                               ),
-                            ],
-                          ),
-                          const Gap(16),
-                          // Role-specific permissions display
-                          _buildRoleSpecificContent(leaderLevel),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.verified,
+                          color: Colors.green.shade600,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
 
-            const Gap(20),
+            const Gap(24),
 
             // Today's Overview
-            const Text(
-              'Today\'s Overview',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Today\'s Overview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Text(
+                  _formatDate(DateTime.now()),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
             ),
 
-            const Gap(12),
+            const Gap(16),
 
             Row(
               children: [
                 Expanded(
                   child: _OverviewCard(
                     title: 'Planned',
-                    value: '12',
-                    color: Colors.blue.shade100,
+                    value: '$plannedToday',
+                    color: Colors.blue.shade50,
                   ),
                 ),
                 const Gap(12),
                 Expanded(
                   child: _OverviewCard(
                     title: 'Completed',
-                    value: '8',
-                    color: Colors.green.shade100,
+                    value: '$completedToday',
+                    color: Colors.green.shade50,
                   ),
                 ),
                 const Gap(12),
                 Expanded(
                   child: _OverviewCard(
-                    title: 'Complaints',
-                    value: '2',
-                    color: Colors.orange.shade100,
+                    title: 'Total',
+                    value: '${todaysVisits.length}',
+                    color: Colors.orange.shade50,
                   ),
                 ),
               ],
             ),
 
-            const Gap(24),
+            const Gap(28),
 
             // Quick Actions
             const Text(
               'Quick Actions',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary,
+                letterSpacing: -0.3,
               ),
             ),
 
-            const Gap(12),
+            const Gap(16),
 
             FutureBuilder<bool>(
               future: AuthService.isTopLeader(),
@@ -284,132 +388,97 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
               },
             ),
 
-            const Gap(24),
+            const Gap(28),
 
             // Performance Metrics
             const Text(
-              'Performance Metrics',
+              'This Month',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary,
+                letterSpacing: -0.3,
               ),
             ),
 
-            const Gap(12),
+            const Gap(16),
 
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Registrations',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          'This Month',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(8),
-                    const Text(
-                      '150',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const Gap(16),
-                    // Simple chart placeholder
-                    Container(
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Wk 1',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
+                          Text(
+                            'Total Registrations',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textSecondary,
                             ),
                           ),
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Wk 2',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Wk 3',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Wk 4',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                          const Gap(4),
+                          Text(
+                            '$totalRegistrationsThisMonth',
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                              letterSpacing: -1,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.people, size: 16, color: Colors.blue.shade700),
+                            const Gap(4),
+                            Text(
+                              '${members.length + supporters.length} total',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(20),
+                  // Progress bars
+                  _buildProgressRow('Week 1', weeklyProgress[0], Colors.blue.shade400),
+                  const Gap(10),
+                  _buildProgressRow('Week 2', weeklyProgress[1], Colors.blue.shade500),
+                  const Gap(10),
+                  _buildProgressRow('Week 3', weeklyProgress[2], Colors.blue.shade600),
+                  const Gap(10),
+                  _buildProgressRow('Week 4', weeklyProgress[3], AppTheme.primaryColor),
+                ],
               ),
             ),
 
@@ -536,24 +605,7 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
 
   Widget _buildProfileTab() {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _handleLogout,
-          ),
-        ],
-      ),
+      backgroundColor: Colors.grey.shade50,
       body: FutureBuilder<UserModel?>(
         future: AuthService.getUser(),
         builder: (context, snapshot) {
@@ -570,315 +622,232 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
             );
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile Header
-                Center(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppTheme.primaryColor,
-                        backgroundImage: leader.picture != null && leader.picture!.isNotEmpty
-                            ? NetworkImage(leader.picture!)
-                            : null,
-                        child: leader.picture == null || leader.picture!.isEmpty
-                            ? (leader.name.isNotEmpty || leader.surname.isNotEmpty
+          return CustomScrollView(
+            slivers: [
+              // Modern Header with gradient
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppTheme.primaryColor,
+                        AppTheme.primaryColor.withOpacity(0.85),
+                      ],
+                    ),
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                        // App bar row
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const SizedBox(width: 48),
+                              const Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.logout, color: Colors.white),
+                                onPressed: _handleLogout,
+                                tooltip: 'Logout',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Gap(8),
+                        // Avatar
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withOpacity(0.3), width: 3),
+                          ),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            backgroundImage: leader.picture != null && leader.picture!.isNotEmpty
+                                ? NetworkImage(leader.picture!)
+                                : null,
+                            child: leader.picture == null || leader.picture!.isEmpty
                                 ? Text(
                                     '${leader.name.isNotEmpty ? leader.name[0] : ''}${leader.surname.isNotEmpty ? leader.surname[0] : ''}'.toUpperCase(),
                                     style: const TextStyle(
-                                      fontSize: 32,
+                                      fontSize: 36,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Icon(
-                                    Icons.person,
-                                    size: 50,
+                                : null,
+                          ),
+                        ),
+                        const Gap(16),
+                        Text(
+                          '${leader.name} ${leader.surname}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const Gap(8),
+                        // Role and status badges
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                leader.level,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const Gap(8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: leader.status.toLowerCase() == 'approved' || leader.status.toLowerCase() == 'active'
+                                    ? Colors.green.shade400
+                                    : Colors.orange.shade400,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    leader.status.toLowerCase() == 'approved' || leader.status.toLowerCase() == 'active'
+                                        ? Icons.check_circle
+                                        : Icons.pending,
+                                    size: 14,
                                     color: Colors.white,
-                                  ))
-                            : null,
-                      ),
-                      const Gap(16),
-                      Text(
-                        '${leader.name} ${leader.surname}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
+                                  ),
+                                  const Gap(4),
+                                  Text(
+                                    leader.status.toLowerCase() == 'approved' || leader.status.toLowerCase() == 'active'
+                                        ? 'Active'
+                                        : 'Pending',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const Gap(4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          leader.level,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
-                      const Gap(8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: leader.status.toLowerCase() == 'approved'
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          leader.status.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: leader.status.toLowerCase() == 'approved'
-                                ? Colors.green.shade700
-                                : Colors.orange.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const Gap(32),
-
-                // Personal Information
-                const Text(
-                  'Personal Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const Gap(12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        if (leader.idNumber != null && leader.idNumber!.isNotEmpty)
-                          _buildProfileInfoRow(Icons.badge, 'ID Number', leader.idNumber!),
-                        if (leader.idNumber != null && leader.idNumber!.isNotEmpty)
-                          const Divider(),
-                        if (leader.nationality != null && leader.nationality!.isNotEmpty)
-                          _buildProfileInfoRow(Icons.flag, 'Nationality', leader.nationality!),
-                        if (leader.nationality != null && leader.nationality!.isNotEmpty)
-                          const Divider(),
-                        if (leader.gender != null && leader.gender!.isNotEmpty)
-                          _buildProfileInfoRow(Icons.person_outline, 'Gender', leader.gender!),
-                        if (leader.gender != null && leader.gender!.isNotEmpty)
-                          const Divider(),
-                        if (user?.email != null)
-                          _buildProfileInfoRow(Icons.email, 'Email', user!.email),
+                        const Gap(24),
                       ],
                     ),
                   ),
                 ),
+              ),
 
-                const Gap(24),
-
-                // Contact Information
-                const Text(
-                  'Contact Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const Gap(12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildProfileInfoRow(
-                          Icons.phone,
-                          'Phone Number',
-                          leader.telNumber ?? 'Not provided'
-                        ),
-                        const Divider(),
-                        _buildProfileInfoRow(
-                          Icons.home,
-                          'Address',
-                          leader.address ?? 'Not provided'
-                        ),
-                        const Divider(),
-                        _buildProfileInfoRow(
-                          Icons.location_city,
-                          'Town',
-                          leader.town ?? 'Not provided'
-                        ),
-                        const Divider(),
-                        _buildProfileInfoRow(
-                          Icons.location_on,
-                          'Ward',
-                          leader.ward ?? 'Not provided'
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const Gap(24),
-
-                // Additional Information
-                if (leader.education != null && leader.education!.isNotEmpty ||
-                    leader.record != null && leader.record!.isNotEmpty ||
-                    leader.contribution != null && leader.contribution!.isNotEmpty)
-                  Column(
+              // Content
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Additional Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      const Gap(12),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (leader.education != null && leader.education!.isNotEmpty) ...[
-                                const Text(
-                                  'Education',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                const Gap(8),
-                                ...leader.education!.map((edu) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('• ', style: TextStyle(fontSize: 14)),
-                                      Expanded(
-                                        child: Text(
-                                          edu,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: AppTheme.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                                const Gap(12),
-                              ],
-                              if (leader.record != null && leader.record!.isNotEmpty) ...[
-                                const Text(
-                                  'Record',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                const Gap(8),
-                                Text(
-                                  leader.record!,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                                const Gap(12),
-                              ],
-                              if (leader.contribution != null && leader.contribution!.isNotEmpty) ...[
-                                const Text(
-                                  'Contribution',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                const Gap(8),
-                                Text(
-                                  leader.contribution!,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ],
+                      // Quick stats row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatCard(
+                              icon: Icons.calendar_today,
+                              label: 'Member Since',
+                              value: leader.createdAt != null
+                                  ? '${_getMonthName(leader.createdAt!.month)} ${leader.createdAt!.year}'
+                                  : 'N/A',
+                              color: Colors.blue,
+                            ),
                           ),
-                        ),
-                      ),
-                      const Gap(24),
-                    ],
-                  ),
-
-                // Account Information
-                const Text(
-                  'Account Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const Gap(12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildProfileInfoRow(
-                          Icons.person_outline,
-                          'User ID',
-                          leader.userId.toString(),
-                        ),
-                        const Divider(),
-                        _buildProfileInfoRow(
-                          Icons.business,
-                          'Municipality ID',
-                          leader.municipalityId.toString(),
-                        ),
-                        const Divider(),
-                        _buildProfileInfoRow(
-                          Icons.check_circle_outline,
-                          'Payment Status',
-                          leader.paid == true ? 'Paid' : 'Unpaid',
-                        ),
-                        if (leader.createdAt != null) ...[
-                          const Divider(),
-                          _buildProfileInfoRow(
-                            Icons.calendar_today,
-                            'Member Since',
-                            '${leader.createdAt!.day}/${leader.createdAt!.month}/${leader.createdAt!.year}',
+                          const Gap(12),
+                          Expanded(
+                            child: _buildStatCard(
+                              icon: Icons.payments_outlined,
+                              label: 'Payment',
+                              value: leader.paid == true ? 'Paid' : 'Unpaid',
+                              color: leader.paid == true ? Colors.green : Colors.orange,
+                            ),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+
+                      const Gap(24),
+
+                      // Personal Information
+                      _buildSectionHeader('Personal Information', Icons.person_outline),
+                      const Gap(12),
+                      _buildModernCard([
+                        if (leader.idNumber != null && leader.idNumber!.isNotEmpty)
+                          _buildModernInfoRow(Icons.badge_outlined, 'ID Number', leader.idNumber!),
+                        if (leader.nationality != null && leader.nationality!.isNotEmpty)
+                          _buildModernInfoRow(Icons.flag_outlined, 'Nationality', leader.nationality!),
+                        if (leader.gender != null && leader.gender!.isNotEmpty)
+                          _buildModernInfoRow(Icons.person_outline, 'Gender', leader.gender!),
+                        if (user?.email != null)
+                          _buildModernInfoRow(Icons.email_outlined, 'Email', user!.email),
+                      ]),
+
+                      const Gap(24),
+
+                      // Contact Information
+                      _buildSectionHeader('Contact Information', Icons.contact_phone_outlined),
+                      const Gap(12),
+                      _buildModernCard([
+                        _buildModernInfoRow(Icons.phone_outlined, 'Phone', leader.telNumber ?? 'Not provided'),
+                        _buildModernInfoRow(Icons.home_outlined, 'Address', leader.address ?? 'Not provided'),
+                        _buildModernInfoRow(Icons.location_city_outlined, 'Town', leader.town ?? 'Not provided'),
+                        _buildModernInfoRow(Icons.pin_drop_outlined, 'Ward', leader.ward ?? 'Not provided'),
+                      ]),
+
+                      const Gap(32),
+
+                      // Logout button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _handleLogout,
+                          icon: const Icon(Icons.logout, size: 20),
+                          label: const Text('Sign Out'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red.shade600,
+                            side: BorderSide(color: Colors.red.shade200),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Gap(100),
+                    ],
                   ),
                 ),
-
-                const Gap(100),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
@@ -1115,231 +1084,51 @@ class _FieldWorkerDashboardPageState extends ConsumerState<FieldWorkerDashboardP
     );
   }
 
-  Widget _buildRoleSpecificContent(String leaderLevel) {
-    switch (leaderLevel) {
-      case 'Admin':
-        return _buildPermissionCard(
-          'ADMIN PERMISSIONS',
-          [
-            '✅ Full System Access',
-            '✅ Manage All Municipalities',
-            '✅ Create/Delete Users',
-            '✅ System Configuration',
-            '✅ Advanced Reports',
-            '✅ Notifications',
-          ],
-          Colors.red.shade50,
-          Colors.red.shade700,
-        );
-      case 'Chairperson':
-        return _buildPermissionCard(
-          'CHAIRPERSON PERMISSIONS',
-          [
-            '✅ Municipality Leadership',
-            '✅ Assign Lower Leaders',
-            '✅ Policy Decisions',
-            '✅ Budget Oversight',
-            '✅ Strategic Planning',
-            '✅ Notifications',
-          ],
-          Colors.purple.shade50,
-          Colors.purple.shade700,
-        );
-      case 'Secretary':
-        return _buildPermissionCard(
-          'SECRETARY PERMISSIONS',
-          [
-            '✅ Meeting Management',
-            '✅ Document Control',
-            '✅ Communication Hub',
-            '✅ Record Keeping',
-            '✅ Schedule Coordination',
-            '✅ Notifications',
-          ],
-          Colors.green.shade50,
-          Colors.green.shade700,
-        );
-      case 'Treasurer':
-        return _buildPermissionCard(
-          'TREASURER PERMISSIONS',
-          [
-            '✅ Financial Oversight',
-            '✅ Budget Management',
-            '✅ Expense Tracking',
-            '✅ Financial Reports',
-            '✅ Payment Authorization',
-            '✅ Notifications',
-          ],
-          Colors.orange.shade50,
-          Colors.orange.shade700,
-        );
-      case 'Ward Convenor':
-        return _buildPermissionCard(
-          'WARD CONVENOR PERMISSIONS',
-          [
-            '✅ Ward Management',
-            '✅ Visit Scheduling',
-            '✅ Member Registration',
-            '✅ Local Issue Resolution',
-            '✅ Community Liaison',
-            '✅ Notifications',
-          ],
-          Colors.blue.shade50,
-          Colors.blue.shade700,
-        );
-      case 'Sub District Leaders':
-        return _buildPermissionCard(
-          'SUB DISTRICT PERMISSIONS',
-          [
-            '✅ District Coordination',
-            '✅ Multi-Ward Oversight',
-            '✅ Resource Allocation',
-            '✅ Regional Planning',
-            '✅ Cross-Ward Projects',
-            '✅ Notifications',
-          ],
-          Colors.teal.shade50,
-          Colors.teal.shade700,
-        );
-      case 'Executive members':
-        return _buildPermissionCard(
-          'EXECUTIVE PERMISSIONS',
-          [
-            '✅ Executive Decisions',
-            '✅ Committee Leadership',
-            '✅ Policy Implementation',
-            '✅ Strategic Oversight',
-            '✅ Departmental Management',
-            '✅ Notifications',
-          ],
-          Colors.indigo.shade50,
-          Colors.indigo.shade700,
-        );
-      case 'Top':
-        return _buildPermissionCard(
-          'TOP LEADER PERMISSIONS',
-          [
-            '✅ Senior Leadership Role',
-            '✅ Strategic Decision Making',
-            '✅ Resource Allocation',
-            '✅ Community Oversight',
-            '✅ Notifications',
-          ],
-          Colors.amber.shade50,
-          Colors.amber.shade700,
-        );
-      default:
-        return _buildPermissionCard(
-          'BASIC LEADER PERMISSIONS',
-          [
-            '✅ Basic Visit Management',
-            '✅ Member Interaction',
-            '✅ Issue Reporting',
-            '✅ Community Engagement',
-            '✅ Notifications',
-            '🔒 Limited Administrative Access',
-          ],
-          Colors.grey.shade50,
-          Colors.grey.shade700,
-        );
-    }
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${date.day} ${months[date.month - 1]}';
   }
 
-  Widget _buildPermissionCard(String title, List<String> permissions, Color bgColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: textColor.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const Gap(8),
-          ...permissions.map((permission) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              permission,
-              style: TextStyle(
-                fontSize: 11,
-                color: textColor.withOpacity(0.8),
-              ),
-            ),
-          )),
-        ],
-      ),
-    );
+  String _getMonthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   }
 
-  Widget _buildProfileInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppTheme.textSecondary),
-        const Gap(12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Gap(2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OverviewCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color color;
-
-  const _OverviewCard({
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const Gap(12),
           Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
+            label,
+            style: TextStyle(
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppTheme.textSecondary,
             ),
@@ -1348,9 +1137,300 @@ class _OverviewCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppTheme.primaryColor),
+        const Gap(8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernCard(List<Widget> children) {
+    final filteredChildren = children.where((w) => w is! SizedBox).toList();
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: filteredChildren.asMap().entries.map((entry) {
+          final isLast = entry.key == filteredChildren.length - 1;
+          return Column(
+            children: [
+              entry.value,
+              if (!isLast)
+                Divider(height: 1, color: Colors.grey.shade100, indent: 56),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildModernInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: AppTheme.primaryColor),
+          ),
+          const Gap(14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const Gap(2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressRow(String label, double progress, Color color) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 50,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ),
+        const Gap(12),
+        Expanded(
+          child: Stack(
+            children: [
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                child: Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Gap(12),
+        Text(
+          '${(progress * 100).toInt()}%',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getRoleBadgeColor(String leaderLevel) {
+    switch (leaderLevel) {
+      case 'Admin':
+        return Colors.red.shade100;
+      case 'Chairperson':
+        return Colors.purple.shade100;
+      case 'Secretary':
+        return Colors.green.shade100;
+      case 'Treasurer':
+        return Colors.orange.shade100;
+      case 'Ward Convenor':
+        return Colors.blue.shade100;
+      case 'Sub District Leaders':
+        return Colors.teal.shade100;
+      case 'Executive members':
+        return Colors.indigo.shade100;
+      case 'Top':
+        return Colors.amber.shade100;
+      default:
+        return AppTheme.primaryColor.withOpacity(0.15);
+    }
+  }
+
+  Color _getRoleBadgeTextColor(String leaderLevel) {
+    switch (leaderLevel) {
+      case 'Admin':
+        return Colors.red.shade800;
+      case 'Chairperson':
+        return Colors.purple.shade800;
+      case 'Secretary':
+        return Colors.green.shade800;
+      case 'Treasurer':
+        return Colors.orange.shade800;
+      case 'Ward Convenor':
+        return Colors.blue.shade800;
+      case 'Sub District Leaders':
+        return Colors.teal.shade800;
+      case 'Executive members':
+        return Colors.indigo.shade800;
+      case 'Top':
+        return Colors.amber.shade800;
+      default:
+        return AppTheme.primaryColor;
+    }
+  }
+
+  List<double> _calculateWeeklyProgress(List<VisitModel> visits, List<dynamic> members, List<dynamic> supporters) {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month, 1);
+
+    // Calculate 4 weeks of activity
+    final weeklyData = <double>[0, 0, 0, 0];
+
+    for (var i = 0; i < 4; i++) {
+      final weekStart = monthStart.add(Duration(days: i * 7));
+      final weekEnd = monthStart.add(Duration(days: (i + 1) * 7));
+
+      // Count visits in this week
+      final weekVisits = visits.where((v) {
+        final visitDate = v.visitDate ?? v.scheduledDate ?? v.actualDate;
+        if (visitDate == null) return false;
+        return visitDate.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+               visitDate.isBefore(weekEnd);
+      }).length;
+
+      // Count members registered this week
+      final weekMembers = members.where((m) {
+        final createdAt = m.createdAt;
+        if (createdAt == null) return false;
+        return createdAt.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+               createdAt.isBefore(weekEnd);
+      }).length;
+
+      // Count supporters registered this week
+      final weekSupporters = supporters.where((s) {
+        final createdAt = s.createdAt;
+        if (createdAt == null) return false;
+        return createdAt.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+               createdAt.isBefore(weekEnd);
+      }).length;
+
+      // Total activity for this week
+      weeklyData[i] = (weekVisits + weekMembers + weekSupporters).toDouble();
+    }
+
+    // Normalize to percentages (0-1)
+    final maxActivity = weeklyData.reduce((a, b) => a > b ? a : b);
+    if (maxActivity == 0) {
+      return [0.0, 0.0, 0.0, 0.0];
+    }
+
+    return weeklyData.map((v) => (v / maxActivity).clamp(0.0, 1.0)).toList();
+  }
+
+}
+
+class _OverviewCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final Color color;
+  final IconData? icon;
+
+  const _OverviewCard({
+    required this.title,
+    required this.value,
+    required this.color,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary.withOpacity(0.7),
+            ),
+          ),
+          const Gap(8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -1,
             ),
           ),
         ],
@@ -1372,29 +1452,46 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
           padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.grey.shade200,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: AppTheme.primaryColor,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 26,
+                  color: AppTheme.primaryColor,
+                ),
               ),
-              const Gap(8),
+              const Gap(10),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

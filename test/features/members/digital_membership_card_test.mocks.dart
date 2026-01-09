@@ -4,6 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i9;
+import 'dart:io' as _i12;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:ncm_mobile_app/core/services/api_service.dart' as _i2;
@@ -409,9 +410,9 @@ class _FakeFeedbackResponse_34 extends _i1.SmartFake
         );
 }
 
-class _FakePaymentResponse_35 extends _i1.SmartFake
-    implements _i2.PaymentResponse {
-  _FakePaymentResponse_35(
+class _FakeMemberComplaintResponse_35 extends _i1.SmartFake
+    implements _i2.MemberComplaintResponse {
+  _FakeMemberComplaintResponse_35(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -420,9 +421,75 @@ class _FakePaymentResponse_35 extends _i1.SmartFake
         );
 }
 
-class _FakeMembershipStatusResponse_36 extends _i1.SmartFake
+class _FakeMemberComplaintsListResponse_36 extends _i1.SmartFake
+    implements _i2.MemberComplaintsListResponse {
+  _FakeMemberComplaintsListResponse_36(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeMemberComplaintDetailResponse_37 extends _i1.SmartFake
+    implements _i2.MemberComplaintDetailResponse {
+  _FakeMemberComplaintDetailResponse_37(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakePaymentResponse_38 extends _i1.SmartFake
+    implements _i2.PaymentResponse {
+  _FakePaymentResponse_38(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeMembershipStatusResponse_39 extends _i1.SmartFake
     implements _i2.MembershipStatusResponse {
-  _FakeMembershipStatusResponse_36(
+  _FakeMembershipStatusResponse_39(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeProfileResponse_40 extends _i1.SmartFake
+    implements _i2.ProfileResponse {
+  _FakeProfileResponse_40(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeProfileUpdateResponse_41 extends _i1.SmartFake
+    implements _i2.ProfileUpdateResponse {
+  _FakeProfileUpdateResponse_41(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakePhotoUploadResponse_42 extends _i1.SmartFake
+    implements _i2.PhotoUploadResponse {
+  _FakePhotoUploadResponse_42(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -1432,6 +1499,42 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
       ) as _i9.Future<_i2.GetSupporterResponse>);
 
   @override
+  _i9.Future<_i2.CreateSupporterResponse> updateSupporter(
+    int? id,
+    _i2.CreateSupporterRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSupporter,
+          [
+            id,
+            request,
+          ],
+        ),
+        returnValue: _i9.Future<_i2.CreateSupporterResponse>.value(
+            _FakeCreateSupporterResponse_21(
+          this,
+          Invocation.method(
+            #updateSupporter,
+            [
+              id,
+              request,
+            ],
+          ),
+        )),
+      ) as _i9.Future<_i2.CreateSupporterResponse>);
+
+  @override
+  _i9.Future<void> deleteSupporter(int? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteSupporter,
+          [id],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
   _i9.Future<_i2.SupporterStatsResponse> getSupporterStats() =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1726,6 +1829,59 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
       ) as _i9.Future<_i2.FeedbackResponse>);
 
   @override
+  _i9.Future<_i2.MemberComplaintResponse> submitMemberComplaint(
+          _i2.MemberComplaintRequest? request) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #submitMemberComplaint,
+          [request],
+        ),
+        returnValue: _i9.Future<_i2.MemberComplaintResponse>.value(
+            _FakeMemberComplaintResponse_35(
+          this,
+          Invocation.method(
+            #submitMemberComplaint,
+            [request],
+          ),
+        )),
+      ) as _i9.Future<_i2.MemberComplaintResponse>);
+
+  @override
+  _i9.Future<_i2.MemberComplaintsListResponse> getMemberComplaints() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMemberComplaints,
+          [],
+        ),
+        returnValue: _i9.Future<_i2.MemberComplaintsListResponse>.value(
+            _FakeMemberComplaintsListResponse_36(
+          this,
+          Invocation.method(
+            #getMemberComplaints,
+            [],
+          ),
+        )),
+      ) as _i9.Future<_i2.MemberComplaintsListResponse>);
+
+  @override
+  _i9.Future<_i2.MemberComplaintDetailResponse> getMemberComplaintDetail(
+          int? id) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMemberComplaintDetail,
+          [id],
+        ),
+        returnValue: _i9.Future<_i2.MemberComplaintDetailResponse>.value(
+            _FakeMemberComplaintDetailResponse_37(
+          this,
+          Invocation.method(
+            #getMemberComplaintDetail,
+            [id],
+          ),
+        )),
+      ) as _i9.Future<_i2.MemberComplaintDetailResponse>);
+
+  @override
   _i9.Future<_i2.PaymentResponse> createPayment(_i2.PaymentRequest? request) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1733,7 +1889,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [request],
         ),
         returnValue:
-            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_35(
+            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_38(
           this,
           Invocation.method(
             #createPayment,
@@ -1750,7 +1906,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [paymentId],
         ),
         returnValue:
-            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_35(
+            _i9.Future<_i2.PaymentResponse>.value(_FakePaymentResponse_38(
           this,
           Invocation.method(
             #retryPayment,
@@ -1785,7 +1941,7 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           [],
         ),
         returnValue: _i9.Future<_i2.MembershipStatusResponse>.value(
-            _FakeMembershipStatusResponse_36(
+            _FakeMembershipStatusResponse_39(
           this,
           Invocation.method(
             #getMembershipStatus,
@@ -1793,4 +1949,65 @@ class MockApiService extends _i1.Mock implements _i2.ApiService {
           ),
         )),
       ) as _i9.Future<_i2.MembershipStatusResponse>);
+
+  @override
+  _i9.Future<_i2.ProfileResponse> getProfile() => (super.noSuchMethod(
+        Invocation.method(
+          #getProfile,
+          [],
+        ),
+        returnValue:
+            _i9.Future<_i2.ProfileResponse>.value(_FakeProfileResponse_40(
+          this,
+          Invocation.method(
+            #getProfile,
+            [],
+          ),
+        )),
+      ) as _i9.Future<_i2.ProfileResponse>);
+
+  @override
+  _i9.Future<_i2.ProfileUpdateResponse> updateProfile(
+          _i2.UpdateProfileRequest? request) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateProfile,
+          [request],
+        ),
+        returnValue: _i9.Future<_i2.ProfileUpdateResponse>.value(
+            _FakeProfileUpdateResponse_41(
+          this,
+          Invocation.method(
+            #updateProfile,
+            [request],
+          ),
+        )),
+      ) as _i9.Future<_i2.ProfileUpdateResponse>);
+
+  @override
+  _i9.Future<_i2.PhotoUploadResponse> uploadProfilePhoto(_i12.File? photo) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #uploadProfilePhoto,
+          [photo],
+        ),
+        returnValue: _i9.Future<_i2.PhotoUploadResponse>.value(
+            _FakePhotoUploadResponse_42(
+          this,
+          Invocation.method(
+            #uploadProfilePhoto,
+            [photo],
+          ),
+        )),
+      ) as _i9.Future<_i2.PhotoUploadResponse>);
+
+  @override
+  _i9.Future<void> deleteProfilePhoto() => (super.noSuchMethod(
+        Invocation.method(
+          #deleteProfilePhoto,
+          [],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
 }

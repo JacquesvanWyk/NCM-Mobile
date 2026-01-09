@@ -32,6 +32,10 @@
 	<string>We need to save scanned identity documents to your photo library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to select identity documents for member registration</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to record check-in and check-out positions during member visits</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to record check-in and check-out positions during member visits</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -50,6 +54,11 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

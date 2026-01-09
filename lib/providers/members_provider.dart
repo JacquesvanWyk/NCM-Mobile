@@ -23,11 +23,20 @@ class MembersNotifier extends StateNotifier<AsyncValue<List<MemberModel>>> {
       state = const AsyncValue.loading();
 
       final municipalityId = await AuthService.getCurrentMunicipalityId();
+      print('DEBUG: Loading members for municipality_id: $municipalityId');
+
+      if (municipalityId == null) {
+        print('DEBUG: No municipality ID found');
+        state = const AsyncValue.data([]);
+        return;
+      }
 
       final response = await _apiService.getMembers(1, municipalityId);
+      print('DEBUG: Loaded ${response.data.length} members');
 
       state = AsyncValue.data(response.data);
     } catch (e, stack) {
+      print('DEBUG: Error loading members: $e');
       state = AsyncValue.error(e, stack);
     }
   }

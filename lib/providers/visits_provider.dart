@@ -183,24 +183,23 @@ class VisitsNotifier extends StateNotifier<AsyncValue<List<VisitModel>>> {
       final currentUser = await AuthService.getLeaderProfile();
       if (currentUser == null) throw Exception('No leader profile found');
 
-      // Create a temporary member or use existing logic
-      // For now, we'll create a visit with null memberId and store member info in notes
+      // Store visitor info in notes since this is a quick visit without member record
       final fullNotes = [
         'Quick Visit for: $name $surname',
-        if (phoneNumber != null) 'Phone: $phoneNumber',
+        if (phoneNumber != null && phoneNumber.isNotEmpty) 'Phone: $phoneNumber',
         'Address: $address',
         if (notes != null && notes.isNotEmpty) 'Notes: $notes',
       ].join('\n');
 
       final request = CreateVisitRequest(
-        memberId: 1, // Use a temporary member ID for quick visits
+        // No memberId for quick visits - visitor info is in notes
         leaderId: currentUser.id,
         municipalityId: municipalityId,
         visitType: visitType,
         visitDate: visitDate,
         locationAddress: address,
         status: 'scheduled',
-        summary: fullNotes, // Use summary field for our notes
+        notes: fullNotes,
       );
 
       final newVisit = await _apiService.createVisit(request);

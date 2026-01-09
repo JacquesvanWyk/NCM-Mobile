@@ -46,6 +46,8 @@ class _SupporterRegistrationPageState extends ConsumerState<SupporterRegistratio
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text(
           'Register Supporter',
           style: TextStyle(

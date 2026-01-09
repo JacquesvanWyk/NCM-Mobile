@@ -28,7 +28,7 @@ class NotificationListNotifier extends StateNotifier<AsyncValue<List<Notificatio
 
     try {
       final apiClient = ApiClient();
-      final response = await apiClient.get('/notifications?page=$_currentPage');
+      final response = await apiClient.get('/api/notifications?page=$_currentPage');
       final data = response.data as Map<String, dynamic>;
 
       final notifications = (data['notifications'] as List)
@@ -58,7 +58,7 @@ class NotificationListNotifier extends StateNotifier<AsyncValue<List<Notificatio
   Future<void> markAsRead(String notificationId) async {
     try {
       final apiClient = ApiClient();
-      await apiClient.post('/notifications/$notificationId/read', {});
+      await apiClient.post('/api/notifications/$notificationId/read', {});
 
       // Update local state
       state = state.whenData((notifications) {
@@ -81,7 +81,7 @@ class NotificationListNotifier extends StateNotifier<AsyncValue<List<Notificatio
   Future<void> markAllAsRead() async {
     try {
       final apiClient = ApiClient();
-      await apiClient.post('/notifications/read-all', {});
+      await apiClient.post('/api/notifications/read-all', {});
 
       // Update local state
       state = state.whenData((notifications) {
@@ -100,7 +100,7 @@ class NotificationListNotifier extends StateNotifier<AsyncValue<List<Notificatio
   Future<void> deleteNotification(String notificationId) async {
     try {
       final apiClient = ApiClient();
-      await apiClient.delete('/notifications/$notificationId');
+      await apiClient.delete('/api/notifications/$notificationId');
 
       // Remove from local state
       state = state.whenData((notifications) {
@@ -129,7 +129,7 @@ class UnreadNotificationCountNotifier extends StateNotifier<AsyncValue<int>> {
   Future<void> fetchUnreadCount() async {
     try {
       final apiClient = ApiClient();
-      final response = await apiClient.get('/notifications/unread-count');
+      final response = await apiClient.get('/api/notifications/unread-count');
       final data = response.data as Map<String, dynamic>;
       state = AsyncValue.data(data['unread_count'] as int);
     } catch (e, stack) {

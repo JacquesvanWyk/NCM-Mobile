@@ -51,11 +51,13 @@ class _QuickAddVisitPageState extends ConsumerState<QuickAddVisitPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         title: const Text('Quick Add Visit'),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _saveVisit,
-            child: const Text('Save'),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

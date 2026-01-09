@@ -17,6 +17,7 @@ import '../../events/pages/events_page.dart';
 import '../../payments/pages/payments_page.dart';
 import '../../emergency/pages/emergency_page.dart';
 import '../../notifications/pages/notifications_inbox_page.dart';
+import '../../../providers/notification_provider.dart';
 
 class MemberDashboardPage extends ConsumerStatefulWidget {
   const MemberDashboardPage({super.key});
@@ -115,49 +116,58 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                       ],
                     ),
                   ),
-                  // Action Icons
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NotificationsInboxPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
+                  // Action Icons - Notification Bell with dynamic badge
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
+                      final unreadCount = unreadCountAsync.valueOrNull ?? 0;
+
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_outlined),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const NotificationsInboxPage(),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.emergency,
-                      color: Colors.red[700],
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EmergencyPage(),
-                        ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
                       );
                     },
-                    tooltip: 'Emergency Services',
                   ),
+                  // TODO: Emergency services - enable when ready
+                  // IconButton(
+                  //   icon: Icon(
+                  //     Icons.emergency,
+                  //     color: Colors.red[700],
+                  //   ),
+                  //   onPressed: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (context) => const EmergencyPage(),
+                  //       ),
+                  //     );
+                  //   },
+                  //   tooltip: 'Emergency Services',
+                  // ),
                   IconButton(
                     icon: const Icon(Icons.settings_outlined),
                     onPressed: () => setState(() => _selectedIndex = 3),
@@ -341,7 +351,7 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
 
   Widget _buildEventsTab() {
     return Scaffold(
-      body: const EventsPage(),
+      body: EventsPage(onBackPressed: () => setState(() => _selectedIndex = 0)),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -376,7 +386,7 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
 
   Widget _buildReportTab() {
     return Scaffold(
-      body: const ComplaintLoggingPage(),
+      body: ComplaintLoggingPage(onBackPressed: () => setState(() => _selectedIndex = 0)),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

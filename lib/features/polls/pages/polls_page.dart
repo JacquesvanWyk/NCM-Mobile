@@ -8,7 +8,9 @@ import 'poll_details_page.dart';
 import 'dart:convert';
 
 class PollsPage extends ConsumerStatefulWidget {
-  const PollsPage({super.key});
+  final VoidCallback? onBackPressed;
+
+  const PollsPage({super.key, this.onBackPressed});
 
   @override
   ConsumerState<PollsPage> createState() => _PollsPageState();
@@ -47,6 +49,18 @@ class _PollsPageState extends ConsumerState<PollsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: (widget.onBackPressed != null || Navigator.canPop(context))
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (widget.onBackPressed != null) {
+                    widget.onBackPressed!();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              )
+            : null,
         title: const Text('Polls & Surveys'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
@@ -189,7 +203,9 @@ class _PollCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daysRemaining = pollData.endsAt.difference(DateTime.now()).inDays;
+    final hasEndDate = pollData.endsAt != null;
+    final daysRemaining = hasEndDate ? pollData.endsAt!.difference(DateTime.now()).inDays : null;
+    final isActive = !hasEndDate || (daysRemaining != null && daysRemaining >= 0);
     final totalVotes = options.fold<int>(0, (sum, option) => sum + option.voteCount);
 
     return Card(
@@ -240,7 +256,7 @@ class _PollCard extends StatelessWidget {
 
               // Description
               Text(
-                pollData.description,
+                pollData.description ?? '',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textSecondary,
@@ -275,12 +291,14 @@ class _PollCard extends StatelessWidget {
                   ),
                   const Gap(4),
                   Text(
-                    daysRemaining > 0
-                        ? '$daysRemaining days left'
-                        : 'Poll ended',
+                    !hasEndDate
+                        ? 'Ongoing'
+                        : (daysRemaining! >= 0
+                            ? '$daysRemaining days left'
+                            : 'Poll ended'),
                     style: TextStyle(
                       fontSize: 14,
-                      color: daysRemaining > 0
+                      color: isActive
                           ? AppTheme.textSecondary
                           : Colors.red,
                     ),
@@ -289,7 +307,7 @@ class _PollCard extends StatelessWidget {
               ),
 
               // Vote button if not voted
-              if (!pollData.hasVoted && daysRemaining > 0) ...[
+              if (!pollData.hasVoted && isActive) ...[
                 const Gap(12),
                 SizedBox(
                   width: double.infinity,

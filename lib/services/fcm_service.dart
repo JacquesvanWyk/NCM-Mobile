@@ -68,6 +68,25 @@ class FcmService {
 
   Future<void> _refreshToken() async {
     try {
+      // On iOS, wait for APNS token before getting FCM token
+      if (Platform.isIOS) {
+        String? apnsToken;
+        // Retry up to 5 times with increasing delays
+        for (int i = 0; i < 5; i++) {
+          apnsToken = await messaging.getAPNSToken();
+          if (apnsToken != null) break;
+          print('FCM: Waiting for APNS token (attempt ${i + 1}/5)...');
+          await Future.delayed(Duration(seconds: 2 + i));
+        }
+        if (apnsToken == null) {
+          print('FCM: APNS token not available, scheduling retry...');
+          // Schedule a retry in 10 seconds
+          Future.delayed(const Duration(seconds: 10), () => _refreshToken());
+          return;
+        }
+        print('FCM: Got APNS token');
+      }
+
       final token = await messaging.getToken();
       if (token != null) {
         print('FCM: Got token: $token');
@@ -81,39 +100,11 @@ class FcmService {
   Future<void> _sendTokenToServer(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final storedToken = prefs.getString('fcm_token');
-
-      if (storedToken == token) {
-        return; // Token hasn't changed
-      }
-
-      final deviceInfo = DeviceInfoPlugin();
-      final packageInfo = await PackageInfo.fromPlatform();
-      String deviceId;
-      String deviceType;
-
-      if (Platform.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        deviceId = iosInfo.identifierForVendor ?? 'unknown_ios';
-        deviceType = 'ios';
-      } else {
-        final androidInfo = await deviceInfo.androidInfo;
-        deviceId = androidInfo.id;
-        deviceType = 'android';
-      }
-
-      final apiClient = ApiClient();
-      await apiClient.post('/fcm-tokens', {
-        'fcm_token': token,
-        'device_id': deviceId,
-        'device_type': deviceType,
-        'app_version': packageInfo.version,
-      });
-
+      // Store locally - will be sent to server during login
       await prefs.setString('fcm_token', token);
-      print('FCM: Token sent to server successfully');
+      print('FCM: Token saved locally (will be sent on login)');
     } catch (e) {
-      print('FCM: Error sending token to server: $e');
+      print('FCM: Error saving token locally: $e');
     }
   }
 
